@@ -1,5 +1,5 @@
 return PlaceObj('ModDef', {
-	'title', "Show Morale Influences",
+	'title', "Travel Speed Fix",
 	'description', 'Fix Travel Speed Influence of high Leadership (=LDR). In Vanilla LDR is not balanced and the Travel Speed has a total range of 500% (and 400% between 25 LDR and 100 LDR).\n\nExample in Vanilla:\n 25 LDR → 12h\n 40 LDR → 10h 12m\n 57 LDR → 8h 10m\n 71 LDR → 6h 30m\n 91 LDR → 4h 06m\n100 LDR → 3h\n\nNow with Mod the range is around 180% between 25 LDR and 100 LDR. Also, the Speed Bonus that is shown in Sector Map is correct now.\n\nExample with Mod in FAST MODE\n 25 LDR → 5h 28m\n 40 LDR → 4h 42m\n 57 LDR → 4h 04m\n 71 LDR → 3h 40m\n 91 LDR → 3h 12m\n100 LDR → 3h\n\nExample with Mod in NORMAL MODE (=default)\n 25 LDR → 8h\n 40 LDR → 7h 18m\n 57 LDR → 6h 36m\n 71 LDR → 6h 08m\n 91 LDR → 5h 34m\n100 LDR → 5h 20m\n\nExample with Mod in HARD MODE\n 25 LDR → 12h\n 40 LDR → 10h 28m\n 57 LDR → 9h 06m\n 71 LDR → 8h 14m\n 91 LDR → 7h 14m\n100 LDR → 6h 42m\n\nEspecially the highest LDR values are more balanced now\n\nYou can select your prefered Mode and Display Type for Squad Speed in "Options -> Mod Options"\n\nPS: Mod is safe to add and remove at any time!',
 	'image', "Mod/tKqxNSe/Images/travel-speed-fix.png",
 	'last_changes', "Old Fast Mode is now Normal Mode. Add real Fast Mode. Add Display Vanilla Squad Speed option.",
