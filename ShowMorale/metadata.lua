@@ -1,0 +1,21 @@
+return PlaceObj('ModDef', {
+	'title', "Explain Morale Influences",
+	'description', "Explain and show Morale Influences on Hover",
+	'image', "Mod/QQsMxHv/Images/explain-morale.png",
+	'last_changes', "Remove debug print",
+	'id', "QQsMxHv",
+	'content_path', "Mod/QQsMxHv/",
+	'author', "Audaki_ra",
+	'version_major', 1,
+	'version', 109,
+	'lua_revision', 233360,
+	'saved_with_revision', 338408,
+	'code', {
+		"Code/Script.lua",
+	},
+	'saved', 1690728459,
+	'code_hash', 2076901974503036919,
+	'screenshot1', "Mod/QQsMxHv/Images/explain-morale-ss1.png",
+	'screenshot2', "Mod/QQsMxHv/Images/explain-morale 2.png",
+	'steam_id', "3012307920",
+})
