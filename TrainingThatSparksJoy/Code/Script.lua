@@ -175,7 +175,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
   local teamSize = unit.team and unit.team.units and #unit.team.units or 1
   if unit.statGainingPoints < 30 and (unit.statGainingPoints + pointsToGain) >= 30 and teamSize >= 2 and not isWellTrained then
-    if not unit.statGainingNotified and CurrentModOptions['ttsj_showTrainingReadyNotification'] == 'True' then
+    if not unit.statGainingNotified and CurrentModOptions['ttsj_showTrainingReadyNotification'] then
       CombatLog("important", T { 0, "<merc_name> has seen a lot of action and will greatly profit from Training now.", merc_name = unit.Nick })
       unit.statGainingNotified = true
     end
@@ -221,7 +221,7 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
         if student.statGainingPoints == 0 then
           progressPerTick = 1 + progressPerTick // 20
           if not student.stat_learning[stat] or student.stat_learning[stat].progress == 0 or InteractionRand(100) <= 1 then
-            if CurrentModOptions['ttsj_showTrainingIneffectiveNotification'] == 'True' then
+            if CurrentModOptions['ttsj_showTrainingIneffectiveNotification'] then
               CombatLog("important", T { 0, "<merc_nickname> is bored and needs to see action (earn XP). Training is only worth 5% now. (Not Enough Train Points)", merc_nickname = student.Nick })
             end
           end
