@@ -5,7 +5,7 @@ StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 
 StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
-const.StatGaining.PointsPerLevel = 3
+const.StatGaining.PointsPerLevel = 2
 const.StatGaining.MilestoneAfterMax = 666
 const.StatGaining.BonusToRoll = 15
 
@@ -111,7 +111,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local pointsToGain = 0
 
   if 0 < xpGain then
-    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 1000 + (10 * unit['Wisdom'])
+    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 800 + (8 * unit['Wisdom'])
     CombatLog("debug", T { 0, "<merc_name>.statGainingPointsExtra = <extra_points>", merc_name = unit.Nick, extra_points = unit.statGainingPointsExtra })
   end
 
