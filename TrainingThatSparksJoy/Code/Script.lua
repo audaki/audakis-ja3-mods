@@ -5,7 +5,7 @@ StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 
 StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
-const.StatGaining.PointsPerLevel = 5
+const.StatGaining.PointsPerLevel = 3
 const.StatGaining.MilestoneAfterMax = 666
 const.StatGaining.BonusToRoll = 15
 
@@ -32,33 +32,36 @@ function RollForStatGaining(unit, stat, failChance)
       if not cooldowns[stat] or cooldowns[stat] <= Game.CampaignTime then
         if 0 < unit[stat] and unit[stat] < 100 then
 
-          local bonusToRoll = const.StatGaining.BonusToRoll
+          local bonusToRoll = 0
 
           if stat == 'Health' then
-            bonusToRoll = 10
+            bonusToRoll = bonusToRoll + 12
           elseif stat == 'Agility' then
-            bonusToRoll = 5
+            bonusToRoll = bonusToRoll + 7
           elseif stat == 'Dexterity' then
-            bonusToRoll = 10
+            bonusToRoll = bonusToRoll + 12
           elseif stat == 'Strength' then
-            bonusToRoll = 10
+            bonusToRoll = bonusToRoll + 12
           elseif stat == 'Wisdom' then
-            bonusToRoll = 5
+            bonusToRoll = bonusToRoll + 7
           elseif stat == 'Leadership' then
-            bonusToRoll = 20
+            bonusToRoll = bonusToRoll + 25
           elseif stat == 'Marksmanship' then
-            bonusToRoll = 35
+            bonusToRoll = bonusToRoll + 35
           elseif stat == 'Mechanical' then
-            bonusToRoll = 20
+            bonusToRoll = bonusToRoll + 25
           elseif stat == 'Explosives' then
-            bonusToRoll = 20
+            bonusToRoll = bonusToRoll + 25
           elseif stat == 'Medical' then
-            bonusToRoll = 20
+            bonusToRoll = bonusToRoll + 25
           end
 
-          local threshold = unit[stat] + ((100 - unit[stat]) // 2.5)
-          local roll = InteractionRand(100, "StatGaining") + 1 + bonusToRoll
-          reason_text = "Need: " .. threshold .. ", Rolled: " .. roll .. ' (' .. (roll - bonusToRoll) .. ' + ' .. bonusToRoll .. ')'
+          local thresholdAdd = (100 - unit[stat]) // 2.5
+          local thresholdBase = unit[stat]
+          local threshold = thresholdBase + thresholdAdd
+          local rollBase = InteractionRand(100, "StatGaining") + 1
+          local roll = rollBase + bonusToRoll
+          reason_text = 'Need: ' .. threshold .. '(' .. thresholdBase .. ' + ' .. thresholdAdd  .. '), Rolled: ' .. roll .. ' (' .. rollBase .. ' + ' .. bonusToRoll .. ')'
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
@@ -79,9 +82,11 @@ function RollForStatGaining(unit, stat, failChance)
   else
     reason_text = "Fail chance procced, need: " .. failChance .. ", Rolled: " .. extraFailRoll
   end
+
   -- TODO: this go debug again
-  --CombatLog("Important", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
-  CombatLog("debug", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
+  CombatLog("Important", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
+  --CombatLog("debug", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
+
   SetMercStateFlag(unit.session_id, "StatGaining", statGaining)
 end
 
@@ -106,7 +111,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local pointsToGain = 0
 
   if 0 < xpGain then
-    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 800 + (8 * unit['Wisdom'])
+    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 1000 + (10 * unit['Wisdom'])
     CombatLog("debug", T { 0, "<merc_name>.statGainingPointsExtra = <extra_points>", merc_name = unit.Nick, extra_points = unit.statGainingPointsExtra })
   end
 
