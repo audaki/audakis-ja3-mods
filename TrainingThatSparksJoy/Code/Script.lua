@@ -9,6 +9,9 @@ const.StatGaining.PointsPerLevel = 3
 const.StatGaining.MilestoneAfterMax = 666
 const.StatGaining.BonusToRoll = 15
 
+-- TODO: Set this to TRUE on release blyat
+local ttsjIsRelease = false
+
 function audaFindXtByTextId(obj, id)
   if obj.Text and TGetID(obj.Text) == id then
     return obj
@@ -22,6 +25,11 @@ function audaFindXtByTextId(obj, id)
 end
 
 function RollForStatGaining(unit, stat, failChance)
+
+  --if unit[stat] < 0 or unit[stat] >= 100 then
+  --  return
+  --end
+
   local statGaining = GetMercStateFlag(unit.session_id, "StatGaining") or {}
   local cooldowns = statGaining.Cooldowns or {}
   local success_text = "(fail) "
@@ -45,23 +53,23 @@ function RollForStatGaining(unit, stat, failChance)
           elseif stat == 'Wisdom' then
             bonusToRoll = bonusToRoll + 7
           elseif stat == 'Leadership' then
-            bonusToRoll = bonusToRoll + 25
+            bonusToRoll = bonusToRoll + 20
           elseif stat == 'Marksmanship' then
             bonusToRoll = bonusToRoll + 35
           elseif stat == 'Mechanical' then
-            bonusToRoll = bonusToRoll + 25
+            bonusToRoll = bonusToRoll + 20
           elseif stat == 'Explosives' then
-            bonusToRoll = bonusToRoll + 25
+            bonusToRoll = bonusToRoll + 20
           elseif stat == 'Medical' then
-            bonusToRoll = bonusToRoll + 25
+            bonusToRoll = bonusToRoll + 20
           end
 
-          local thresholdAdd = (100 - unit[stat]) // 2.5
           local thresholdBase = unit[stat]
+          local thresholdAdd = (100 - unit[stat]) // 2.5
           local threshold = thresholdBase + thresholdAdd
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase + bonusToRoll
-          reason_text = 'Need: ' .. threshold .. '(' .. thresholdBase .. ' + ' .. thresholdAdd  .. '), Rolled: ' .. roll .. ' (' .. rollBase .. ' + ' .. bonusToRoll .. ')'
+          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. ' + ' .. thresholdAdd .. '), Rolled: ' .. roll .. ' (' .. rollBase .. ' + ' .. bonusToRoll .. ')'
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
@@ -83,9 +91,7 @@ function RollForStatGaining(unit, stat, failChance)
     reason_text = "Fail chance procced, need: " .. failChance .. ", Rolled: " .. extraFailRoll
   end
 
-  -- TODO: this go debug again
-  CombatLog("Important", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
-  --CombatLog("debug", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
+  CombatLog(ttsjIsRelease and "debug" or "important", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
 
   SetMercStateFlag(unit.session_id, "StatGaining", statGaining)
 end
@@ -111,12 +117,12 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local pointsToGain = 0
 
   if 0 < xpGain then
-    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 1000 + (10 * unit['Wisdom'])
+    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 800 + (8 * unit['Wisdom'])
     CombatLog("debug", T { 0, "<merc_name>.statGainingPointsExtra = <extra_points>", merc_name = unit.Nick, extra_points = unit.statGainingPointsExtra })
   end
 
   if unit.statGainingPointsExtra >= 10000 then
-    CombatLog("debug", T { 0, "<merc_name> got extra Train Point for statGainingPointsExtra", merc_name = unit.Nick })
+    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> +1 Train Point for statGainingPointsExtra", merc_name = unit.Nick })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
@@ -132,7 +138,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
     for i = 1, #xpThresholds do
       if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-        CombatLog("debug", T { 0, "<merc_name> got Train Point for XP threshold", merc_name = unit.Nick })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> +1 Train Point for XP threshold", merc_name = unit.Nick })
         pointsToGain = pointsToGain + 1
       end
     end
@@ -153,7 +159,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       xp = xp + tempXp
       xpGain = xpGain - tempXp
       if xpToMilestone <= tempXp then
-        CombatLog("debug", T { 0, "<merc_name> got Train Point for XP milestone threshold", merc_name = unit.Nick })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> got Train Point for XP milestone threshold", merc_name = unit.Nick })
         pointsToGain = pointsToGain + 1
         xpSinceLastMilestone = 0
         milestone = milestone + increment
@@ -172,7 +178,6 @@ function ReceiveStatGainingPoints(unit, xpGain)
       unit['Explosives'] >= 88 and
       unit['Medical'] >= 88
 
-
   local teamSize = unit.team and unit.team.units and #unit.team.units or 1
   if unit.statGainingPoints < 30 and (unit.statGainingPoints + pointsToGain) >= 30 and teamSize >= 2 and not isWellTrained then
     if not unit.statGainingNotified and CurrentModOptions['ttsj_showTrainingReadyNotification'] then
@@ -181,10 +186,9 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
   end
 
-
-  if pointsToGain >= 1 then
-    CombatLog("debug", T { 0, "<merc_name> gaining <points> Train Points", merc_name = unit.Nick, points = pointsToGain })
-  end
+  --if pointsToGain >= 1 then
+  --  CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> gaining <points> Train Points", merc_name = unit.Nick, points = pointsToGain })
+  --end
   unit.statGainingPoints = Min(30, unit.statGainingPoints + pointsToGain)
 end
 
