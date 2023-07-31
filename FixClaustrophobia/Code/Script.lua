@@ -1,0 +1,264 @@
+
+
+
+--print(1)
+--StatusEffectsObject.AddStatusEffect = function(self, effect, ...)
+--  print('[SEs AddStatusEffect] START')
+--  if not effect:IsCompatible(self, ...) then
+--    return
+--  end
+--  local limit = effect.StackLimit
+--  if 0 < limit then
+--    local status_effects_limits = self.status_effects_limits
+--    if not status_effects_limits then
+--      status_effects_limits = {}
+--      self.status_effects_limits = status_effects_limits
+--    end
+--    local counter = effect:StackLimitCounter() or false
+--    local count = status_effects_limits[counter] or 0
+--    if limit == 1 then
+--      if count ~= 0 then
+--        print('[SEs AddStatusEffect] count ~= 0')
+--        return effect:OnStackLimitReached(self, ...)
+--      end
+--      status_effects_limits[counter] = effect
+--    else
+--      if limit <= count then
+--        print('[SEs AddStatusEffect] limit <= count')
+--        return effect:OnStackLimitReached(self, ...)
+--      end
+--      status_effects_limits[counter] = count + 1
+--    end
+--  end
+--  self:RefreshExpiration(effect)
+--  local status_effects = self.status_effects
+--  if not status_effects then
+--    status_effects = {}
+--    self.status_effects = status_effects
+--  end
+--  status_effects[#status_effects + 1] = effect
+--  effect:OnAdd(self, ...)
+--  print('[SEs AddStatusEffect] #status_effects = ' .. #status_effects)
+--  return effect
+--end
+--print(2)
+--
+--
+--
+
+--function isGoodId(id)
+--  return id ~= 'Hidden'
+--      and id ~= 'Flanked'
+--      and id ~= 'Darkness'
+--      and id ~= 'Protected'
+--      and id ~= 'Focused'
+--      and id ~= 'Spotted'
+--      and id ~= 'FreeMove'
+--      and id ~= 'Surprised'
+--      and id ~= 'Distracted'
+--      and id ~= 'Unaware'
+--      and id ~= 'Suspicious'
+--      and id ~= 'OpeningAttackBonus'
+--      and id ~= 'Revealed'
+--      and id ~= 'SpentAP'
+--      and id ~= 'AITauntCounter'
+--      and id ~= 'FirstThrow'
+--      and id ~= 'WellRested'
+--      and id ~= 'Wounded'
+--      and id ~= 'Conscience_Proud'
+--      and id ~= 'Conscience_Righteous'
+--      and id ~= 'Conscience_Guilty'
+--      and id ~= 'Conscience_Sinful'
+--      and id ~= 'BeefedUp'
+--      and id ~= 'MinFreeMove'
+--      and id ~= 'HitTheDeck'
+--      and id ~= 'Deadeye'
+--      and id ~= 'OpportunisticKiller'
+--      and id ~= 'Hobbler'
+--      and id ~= 'HoldPosition'
+--      and id ~= 'HeavyWeaponsTraining'
+--end
+--
+--function StatusEffectObject:AddStatusEffect(id, stacks)
+--  if isGoodId(id) then
+--    print('[AddStatusEffect] START [nick: ' .. self.session_id .. ', id: ' .. (id or '') .. ', stacks: ' .. (stacks or '') .. ']')
+--  end
+--  NetUpdateHash("StatusEffectObject:AddStatusEffect", self, id, IsValid(self) and self:HasMember("GetPos") and self:GetPos())
+--  if self.StatusEffectImmunity[id] or IsKindOfClasses(self, "Unit", "UnitData") and self:IsDead() then
+--    return
+--  end
+--  stacks = stacks or 1
+--  local preset = CharacterEffectDefs[id]
+--  local effect = self:GetStatusEffect(id)
+--  local cur_stacks = effect and effect.stacks or 0
+--  if isGoodId(id) then
+--    print('[AddStatusEffect] cur_stacks: ' .. cur_stacks .. ', max_stacks: ' .. (preset:GetProperty("max_stacks") or ''))
+--  end
+--  if cur_stacks >= preset:GetProperty("max_stacks") then
+--    if isGoodId(id) then
+--      print('[AddStatusEffect] cur_stacks >= max_stacks -> RETURN')
+--    end
+--    return
+--  end
+--  local context = {}
+--  context.target_units = {self}
+--  local ok = EvalConditionList(preset:GetProperty("Conditions"), self, context)
+--  if not ok then
+--    return
+--  end
+--  local refresh
+--  local newStack = false
+--  if not effect then
+--    effect = PlaceCharacterEffect(id)
+--    effect.stacks = Min(stacks, effect.max_stacks)
+--    table.insert(self.StatusEffects, effect)
+--    self.StatusEffects[id] = #self.StatusEffects
+--    newStack = true
+--    table.sort(self.StatusEffects, function(a, b)
+--      return CharacterEffectDefs[a.class].SortKey < CharacterEffectDefs[b.class].SortKey
+--    end)
+--    self:UpdateStatusEffectIndex()
+--    for _, mod in ipairs(preset:GetProperty("Modifiers")) do
+--      self:AddModifier("StatusEffect:" .. id, mod.target_prop, mod.mod_mul * 10, mod.mod_add)
+--    end
+--  else
+--    newStack = effect.stacks
+--    effect.stacks = Min(effect.stacks + stacks, effect.max_stacks)
+--    newStack = newStack < effect.stacks
+--    refresh = true
+--  end
+--  effect.CampaignTimeAdded = Game.CampaignTime
+--  if Platform.developer and self:ReportStatusEffectsInLog() and newStack and not self:IsDead() then
+--    CombatLog("debug", T({
+--      Untranslated("<em><effect></em> (<name>)"),
+--      name = self:GetLogName(),
+--      effect = effect.DisplayName or Untranslated(id)
+--    }))
+--  end
+--  if effect.AddEffectText and effect.AddEffectText ~= "" and not refresh and not self:IsDead() then
+--    CombatLog("short", T({
+--      effect.AddEffectText,
+--      self
+--    }))
+--  end
+--  if IsValid(self) and effect.HasFloatingText and newStack then
+--    CreateMapRealTimeThread(function()
+--      WaitPlayerControl()
+--      CreateFloatingText(self, T({
+--        961020758708,
+--        "+ <DisplayName>",
+--        effect
+--      }), nil, nil, true)
+--    end)
+--  end
+--  if effect.lifetime ~= "Indefinite" and IsKindOf(self, "Unit") and g_Combat then
+--    local duration = effect.lifetime == "Until End of Next Turn" and 1 or 0
+--    if g_CurrentTeam and g_Teams[g_CurrentTeam] and not g_Teams[g_CurrentTeam].player_team then
+--      duration = duration + 1
+--    end
+--    self:SetEffectExpirationTurn(id, "expiration", g_Combat.current_turn + duration)
+--  end
+--  ObjModified(self.StatusEffects)
+--  Msg("StatusEffectAdded", self, id, stacks)
+--  if isGoodId(id) then
+--    --print('[AddStatusEffect] END')
+--  end
+--  return effect
+--end
+--print(3)
+--
+--function StatusEffectObject:RemoveStatusEffect(id, stacks, reason)
+--  if isGoodId(id) then
+--    print('[RemoveStatusEffect] START [name:' .. self.session_id .. ', id: ' .. (id or '') .. ', stacks: ' .. (stacks or '') .. ', reason: ' .. (reason or '') .. ']')
+--  end
+--  local has = self:HasStatusEffect(id)
+--  if not has then
+--    if isGoodId(id) then
+--      print('[RemoveStatusEffect] doesn\'t have?')
+--    end
+--    return
+--  end
+--  NetUpdateHash("StatusEffectObject:RemoveStatusEffect", self, id, self:HasMember("GetPos") and self:GetPos())
+--  local effect = self.StatusEffects[has]
+--  local preset = CharacterEffectDefs[id]
+--  if not effect.stacks then
+--    if isGoodId(id) then
+--      print('[RemoveStatusEffect] not effect.stacks')
+--    end
+--    table.remove(self.StatusEffects, has)
+--    self.StatusEffects[id] = nil
+--    self:UpdateStatusEffectIndex()
+--    for _, mod in ipairs(preset:GetProperty("Modifiers")) do
+--      self:RemoveModifier("StatusEffect:" .. id, mod.target_prop)
+--    end
+--    return
+--  end
+--  if reason == "death" and effect.dontRemoveOnDeath then
+--    return
+--  end
+--  local lost
+--  local to_remove = stacks == "all" and effect.stacks or stacks or 1
+--  local removedStacks = Min(effect.stacks, to_remove)
+--  effect.stacks = Max(0, effect.stacks - to_remove)
+--  if effect.stacks == 0 then
+--    if isGoodId(id) then
+--      print('[RemoveStatusEffect] effect.stacks == 0')
+--    end
+--    table.remove(self.StatusEffects, has)
+--    self.StatusEffects[id] = nil
+--    self:UpdateStatusEffectIndex()
+--    for _, mod in ipairs(preset:GetProperty("Modifiers")) do
+--      self:RemoveModifier("StatusEffect:" .. id, mod.target_prop)
+--    end
+--    lost = true
+--    if Platform.developer and self:ReportStatusEffectsInLog() and not self:IsDead() then
+--      CombatLog("debug", T({
+--        Untranslated("<name> lost effect <effect>"),
+--        name = self:GetLogName(),
+--        effect = effect.DisplayName or Untranslated(id)
+--      }))
+--    end
+--    if effect.RemoveEffectText and not self:IsDead() then
+--      CombatLog("short", T({
+--        effect.RemoveEffectText,
+--        self
+--      }))
+--    end
+--  end
+--  ObjModified(self.StatusEffects)
+--  Msg("StatusEffectRemoved", self, id, removedStacks, reason)
+--end
+--print(4)
+
+--function OnMsg.ChangeMap()
+--  print('ChangeMap')
+--  print(g_Units)
+--end
+
+--function OnMsg.StatusEffectRemoved()
+--  print('StatusEffectRemoved')
+--  print(g_Units['Vicki'].StatusEffects)
+--end
+--
+--function OnMsg.SaveGameStart()
+--  print('SaveGameStart')
+--  print(g_Units['Vicki'].StatusEffects)
+--end
+
+--function OnMsg.ChangeMapDone()
+--  print('ChangeMapDone')
+--  print(g_Units['Vicki'].StatusEffects)
+--end
+
+--function OnMsg.EnterSector()
+--  print('EnterSector')
+--  print(g_Units['Vicki']:RemoveStatusEffect('ClaustrophobiaChecked'))
+--end
+
+--ClaustrophobiaChecked.msg_reactions[1].Event = 'EnterSector'
+
+function OnMsg.EnterSector()
+  for _, unit in ipairs(g_Units) do
+    unit:RemoveStatusEffect('ClaustrophobiaChecked')
+  end
+end
