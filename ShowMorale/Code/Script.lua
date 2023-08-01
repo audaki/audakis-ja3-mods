@@ -23,13 +23,16 @@ if mercRolloverMoraleXt then
     local teamMorale = merc.team and merc.team.morale or 0
     local personalMorale = 0
     local isDisliking = false
-    for _, dislikedMerc in ipairs(merc.Dislikes) do
-      local dislikedIndex = table.find(merc.team.units, "session_id", dislikedMerc)
-      if dislikedIndex and not merc.team.units[dislikedIndex]:IsDead() then
-        personalMorale = personalMorale - 1
-        influences = influences .. '<style InventoryHintTextRed>Dislikes ' .. merc.team.units[dislikedIndex].Nick .. '</style> -1<newline>'
-        isDisliking = true
-        break
+
+    if not audaHasRemovedAllDislikes then
+      for _, dislikedMerc in ipairs(merc.Dislikes) do
+        local dislikedIndex = table.find(merc.team.units, "session_id", dislikedMerc)
+        if dislikedIndex and not merc.team.units[dislikedIndex]:IsDead() then
+          personalMorale = personalMorale - 1
+          influences = influences .. '<style InventoryHintTextRed>Dislikes ' .. merc.team.units[dislikedIndex].Nick .. '</style> -1<newline>'
+          isDisliking = true
+          break
+        end
       end
     end
 
