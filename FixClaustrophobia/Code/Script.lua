@@ -6,11 +6,20 @@ function StatusEffectObject:RemoveStatusEffect(id, stacks, reason)
   NetUpdateHash("StatusEffectObject:RemoveStatusEffect", self, id, self:HasMember("GetPos") and self:GetPos())
   local effect = self.StatusEffects[has]
   local preset = CharacterEffectDefs[id]
+
+  local shallUpdateUnitData = g_Units
+      and self.session_id
+      and self == g_Units[self.session_id]
+      and self ~= gv_UnitData[self.session_id]
+      and self.team
+      and (self.team.side == "player1" or self.team.side == "player2")
+      and id ~= 'Wounded'
+
   if not effect.stacks then
     table.remove(self.StatusEffects, has)
     self.StatusEffects[id] = nil
 
-    if g_Units and self.session_id and self == g_Units[self.session_id] and self ~= gv_UnitData[self.session_id] then
+    if shallUpdateUnitData then
       gv_UnitData[self.session_id]:RemoveStatusEffect(id)
     end
 
@@ -31,7 +40,7 @@ function StatusEffectObject:RemoveStatusEffect(id, stacks, reason)
     table.remove(self.StatusEffects, has)
     self.StatusEffects[id] = nil
 
-    if g_Units and self.session_id and self == g_Units[self.session_id] and self ~= gv_UnitData[self.session_id] then
+    if shallUpdateUnitData then
       gv_UnitData[self.session_id]:RemoveStatusEffect(id)
     end
 
