@@ -7,13 +7,14 @@ return PlaceObj('ModDef', {
 	'content_path', "Mod/QQsMxHv/",
 	'author', "Audaki_ra",
 	'version_major', 1,
-	'version', 111,
+	'version_minor', 1,
+	'version', 112,
 	'lua_revision', 233360,
 	'saved_with_revision', 338408,
 	'code', {
 		"Code/Script.lua",
 	},
-	'saved', 1690887414,
+	'saved', 1690887560,
 	'code_hash', 4734361114630748233,
 	'steam_id', "3012307920",
 })
