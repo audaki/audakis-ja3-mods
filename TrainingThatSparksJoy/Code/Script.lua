@@ -65,11 +65,11 @@ function RollForStatGaining(unit, stat, failChance)
           end
 
           local thresholdBase = unit[stat]
-          local thresholdAdd = (100 - unit[stat]) // 2.5
-          local threshold = thresholdBase + thresholdAdd
+          local thresholdAdd = floatfloor((100 - unit[stat]) // 2.5)
+          local threshold = thresholdBase + thresholdAdd - bonusToRoll
           local rollBase = InteractionRand(100, "StatGaining") + 1
-          local roll = rollBase + bonusToRoll
-          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. ' + ' .. thresholdAdd .. '), Rolled: ' .. roll .. ' (' .. rollBase .. ' + ' .. bonusToRoll .. ')'
+          local roll = rollBase
+          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. ' + ' .. thresholdAdd .. ' - ' .. bonusToRoll '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
