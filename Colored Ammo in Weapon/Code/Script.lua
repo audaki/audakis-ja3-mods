@@ -10,20 +10,14 @@ function TFormat.bullets(context_obj, bullets, max, icon)
     return T(994336406701, "<image UI/Icons/Hud/ammo_infinite>")
   end
   local max = max or context_obj and context_obj.MagazineSize or context_obj.MaxStacks
-  --local text = bullets == 0 and "<error><bullets></error>" or "<bullets>"
 
   local text = '<bullets>'
   if context_obj.ammo and context_obj.ammo.colorStyle and context_obj.ammo.colorStyle ~= 'AmmoBasicColor' then
     local colorStyle = context_obj.ammo.colorStyle
-    --if context_obj.ammo.class == '_9mm_Shock' then
-    --  colorStyle = 'AmmoHPColor'
-    --end
-
     text = '<color ' .. colorStyle .. '>' .. text .. '</color>'
   end
   if not max then
     return T({
-      0,
       text,
       bullets = bullets,
       icon = icon,
