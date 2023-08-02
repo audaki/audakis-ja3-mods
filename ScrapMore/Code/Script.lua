@@ -1,5 +1,5 @@
 
-if InventoryStack then
+	if InventoryStack and not InventoryStack.hasIncreasedScrapParts then
 	InventoryStack.GetScrapParts = function(self)
 		if self.class and InventoryItemDefs[self.class] then
 			return self.Amount * (InventoryItemDefs[self.class]:GetProperty("ScrapParts") or 0)
