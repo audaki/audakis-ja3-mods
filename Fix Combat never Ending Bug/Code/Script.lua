@@ -67,7 +67,7 @@ function Combat:ShouldEndDueToNoVisibility()
     end
   end
 
-  local isShallEnd = self.turns_no_visibility >= teamCount * 3
+  local isShallEnd = self.turns_no_visibility >= teamCount * 5
   if isShallEnd then
 
     local p1Team = nil
