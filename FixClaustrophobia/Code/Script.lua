@@ -19,7 +19,7 @@ function Unit:Despawn()
   if not self:IsAmbientUnit() then
     self:SyncWithSession("map")
   end
-  self:RemoveAllStatusEffects('despawn')
+  self:RemoveAllStatusEffects('audaDespawn')
   if SelectedObj == self then
     SelectObj()
   end
@@ -40,8 +40,20 @@ function Unit:Despawn()
   end
 end
 
+function OnMsg.EnterSector()
+  if not g_Combat then
+    for _, u in ipairs(g_Units) do
+      if u:HasStatusEffect('ClaustrophobiaChecked') then
+        u:RemoveStatusEffect('ClaustrophobiaChecked')
+      end
+    end
+  end
+end
+
+
 
 function StatusEffectObject:RemoveStatusEffect(id, stacks, reason)
+
   local has = self:HasStatusEffect(id)
   if not has then
     return
@@ -56,7 +68,12 @@ function StatusEffectObject:RemoveStatusEffect(id, stacks, reason)
       and self ~= gv_UnitData[self.session_id]
       and self.team
       and (self.team.side == "player1" or self.team.side == "player2")
-      and reason ~= 'despawn'
+      and reason ~= 'audaDespawn'
+
+  if reason == 'audaDespawn' then
+    reason = nil
+  end
+
 
   if not effect.stacks then
     table.remove(self.StatusEffects, has)
