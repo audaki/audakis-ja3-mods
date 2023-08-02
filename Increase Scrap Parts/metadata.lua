@@ -1,0 +1,20 @@
+return PlaceObj('ModDef', {
+	'title', "Increase Scrap Parts",
+	'description', "If you don't have enough Parts, you can use this mod to increase the amount of Parts you get for Scrapping.\n\nCan set Scrap Amount between 110% (=10% more) and 400%.\n\n=> This will make your game easier, use according to your own judgement.\n\nPS: Safe to add and remove at any time (restart JA3.exe after disable).\n\nEnjoy :-)",
+	'image', "Mod/siTbckx/Images/increase-scrap-parts.png",
+	'last_changes', "Initial Release",
+	'id', "siTbckx",
+	'content_path', "Mod/siTbckx/",
+	'author', "Audaki_ra",
+	'version_major', 1,
+	'version', 20,
+	'lua_revision', 233360,
+	'saved_with_revision', 338408,
+	'code', {
+		"Code/Script.lua",
+	},
+	'has_options', true,
+	'saved', 1690981578,
+	'code_hash', 8604913796256505747,
+	'steam_id', "3013767865",
+})
