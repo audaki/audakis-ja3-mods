@@ -31,9 +31,9 @@ local mercRolloverApXt = audaFindXtByComment(XTemplates.PDAMercRollover, 'ap ind
 if mercRolloverApXt then
   mercRolloverApXt.OnContextUpdate = function(self, context, ...)
     local text
+
     if g_Combat then
       local currentAP = context:GetUIActionPoints()
-      local maxAP = context:GetMaxActionPoints()
       local bonus = context.free_move_ap
       local ctx = SubContext(context, {
         current = currentAP,
@@ -41,7 +41,6 @@ if mercRolloverApXt then
       })
       if 1000 <= bonus then
         text = T({
-          158709477285,
           "<apn(current)><style PDASMLevelTxt>+<apn(bonus)></style>",
           ctx
         })
@@ -79,7 +78,6 @@ for _, xt in ipairs(apDisplays) do
       self.parent.MinWidth = 39
       self.parent.MaxWidth = 49
       local currentAP = context:GetUIActionPoints()
-      local maxAP = context:GetMaxActionPoints()
       local bonus = context.free_move_ap
       local ctx = SubContext(context, {
         current = currentAP,
@@ -87,7 +85,6 @@ for _, xt in ipairs(apDisplays) do
       })
       if 1000 <= bonus then
         text = T({
-          158709477285,
           "<apn(current)><style PDASM_NewSquadLabel>+<apn(bonus)></style>",
           ctx
         })
