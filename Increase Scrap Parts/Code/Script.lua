@@ -6,7 +6,6 @@ function OnMsg.OptionsApply()
   auda_increaseScrapParts_modifier = tonumber(string.sub(CurrentModOptions['auda_increaseScrapParts_modifier'], 1, -2))
 end
 
-print(auda_increaseScrapParts_modifier)
 if InventoryStack then
   InventoryStack.hasIncreasedScrapParts = true
   InventoryStack.GetScrapParts = function(self)
