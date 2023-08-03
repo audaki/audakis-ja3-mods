@@ -5,9 +5,89 @@ StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 
 StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
-const.StatGaining.PointsPerLevel = 3
+const.StatGaining.PointsPerLevel = 2
 const.StatGaining.MilestoneAfterMax = 666
 const.StatGaining.BonusToRoll = 15
+
+  UndefineClass('Loner')
+  DefineClass.Loner = {
+    __parents = { "Perk" },
+    __generated_by_class = "ModItemCharacterEffectCompositeDef",
+
+    __copy_group = "Quirk",
+    object_class = "Perk",
+    msg_reactions = {
+      PlaceObj('MsgReaction', {
+        Event = "TurnStart",
+        Handler = function (self, team)
+          local reaction_idx = table.find(self.msg_reactions or empty_table, "Event", "TurnStart")
+          if not reaction_idx then return end
+
+          local function exec(self, team)
+            for _, unit in ipairs(g_Units) do
+              if unit.team == team and HasPerk(unit, self.id) then
+                local proc = true
+                for _, other in ipairs(unit.team.units) do
+                  if unit ~= other and DivRound(unit:GetDist(other), const.SlabSizeX) <= self:ResolveValue("loner_radius") then
+                    proc = false
+                    break
+                  end
+                end
+
+                if proc then
+                  unit:AddStatusEffect("Inspired")
+                  PlayVoiceResponse(unit, "Loner")
+                end
+              end
+            end
+          end
+          local id = GetCharacterEffectId(self)
+
+          if id then
+            local objs = {}
+            for session_id, data in pairs(gv_UnitData) do
+              local obj = g_Units[session_id] or data
+              if obj:HasStatusEffect(id) then
+                objs[session_id] = obj
+              end
+            end
+            for _, obj in sorted_pairs(objs) do
+              exec(self, team)
+            end
+          else
+            exec(self, team)
+          end
+
+        end,
+        HandlerCode = function (self, team)
+          for _, unit in ipairs(g_Units) do
+            if unit.team == team and HasPerk(unit, self.id) then
+              local proc = true
+              for _, other in ipairs(unit.team.units) do
+                if unit ~= other and DivRound(unit:GetDist(other), const.SlabSizeX) <= self:ResolveValue("loner_radius") then
+                  proc = false
+                  break
+                end
+              end
+
+              if proc then
+                unit:AddStatusEffect("Inspired")
+                PlayVoiceResponse(unit, "Loner")
+              end
+            end
+          end
+        end,
+        param_bindings = false,
+      }),
+    },
+    DisplayName = T(643033597159, --[[ModItemCharacterEffectCompositeDef Loner DisplayName]] "Loner"),
+    Description = T(238527648977, --[[ModItemCharacterEffectCompositeDef Loner Description]] "Become <color EmStyle>Inspired</color> when there are no teammates <color EmStyle>in your vicinity</color> at turn start."),
+    Icon = "UI/Icons/Perks/Loner",
+    Tier = "Quirk",
+  }
+
+
+
 
 -- TODO: Set this to TRUE on release blyat
 local ttsjIsRelease = false
@@ -25,10 +105,6 @@ function audaFindXtByTextId(obj, id)
 end
 
 function RollForStatGaining(unit, stat, failChance)
-
-  --if unit[stat] < 0 or unit[stat] >= 100 then
-  --  return
-  --end
 
   local statGaining = GetMercStateFlag(unit.session_id, "StatGaining") or {}
   local cooldowns = statGaining.Cooldowns or {}
@@ -69,7 +145,7 @@ function RollForStatGaining(unit, stat, failChance)
           local threshold = thresholdBase + thresholdAdd - bonusToRoll
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
-          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. ' + ' .. thresholdAdd .. ' - ' .. bonusToRoll '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
+          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. ' + ' .. thresholdAdd .. ' - ' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
@@ -79,7 +155,7 @@ function RollForStatGaining(unit, stat, failChance)
             success_text = "(success) "
           end
         else
-          reason_text = stat .. " is " .. unit[stat]
+          reason_text = stat .. " too high"
         end
       else
         reason_text = stat .. " is in cooldown"
@@ -117,12 +193,15 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local pointsToGain = 0
 
   if 0 < xpGain then
-    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 800 + (8 * unit['Wisdom'])
-    CombatLog("debug", T { 0, "<merc_name>.statGainingPointsExtra = <extra_points>", merc_name = unit.Nick, extra_points = unit.statGainingPointsExtra })
+    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 300 + (5 * unit['Wisdom'])
+    if unit.statGainingPoints <= 4 then
+      unit.statGainingPointsExtra = unit.statGainingPointsExtra + InteractionRand(5000 - (1000 * unit.statGainingPoints))
+    end
+    --CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.statGainingPointsExtra = <extra_points>", nick = unit.Nick, extra_points = unit.statGainingPointsExtra })
   end
 
-  if unit.statGainingPointsExtra >= 10000 then
-    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> +1 Train Point for statGainingPointsExtra", merc_name = unit.Nick })
+  while unit.statGainingPointsExtra >= 10000 do
+    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> +1 Train Point for statGainingPointsExtra", nick = unit.Nick })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
@@ -138,7 +217,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
     for i = 1, #xpThresholds do
       if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> +1 Train Point for XP threshold", merc_name = unit.Nick })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> +1 Train Point for XP threshold", nick = unit.Nick })
         pointsToGain = pointsToGain + 1
       end
     end
@@ -159,7 +238,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       xp = xp + tempXp
       xpGain = xpGain - tempXp
       if xpToMilestone <= tempXp then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> got Train Point for XP milestone threshold", merc_name = unit.Nick })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> got Train Point for XP milestone threshold", nick = unit.Nick })
         pointsToGain = pointsToGain + 1
         xpSinceLastMilestone = 0
         milestone = milestone + increment
@@ -167,29 +246,10 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
   end
 
-  local isWellTrained = unit['Health'] >= 88 and
-      unit['Agility'] >= 88 and
-      unit['Dexterity'] >= 88 and
-      unit['Strength'] >= 88 and
-      unit['Wisdom'] >= 88 and
-      unit['Leadership'] >= 88 and
-      unit['Marksmanship'] >= 88 and
-      unit['Mechanical'] >= 88 and
-      unit['Explosives'] >= 88 and
-      unit['Medical'] >= 88
-
-  local teamSize = unit.team and unit.team.units and #unit.team.units or 1
-  if unit.statGainingPoints < 30 and (unit.statGainingPoints + pointsToGain) >= 30 and teamSize >= 2 and not isWellTrained then
-    if not unit.statGainingNotified and CurrentModOptions['ttsj_showTrainingReadyNotification'] then
-      CombatLog("important", T { 0, "<merc_name> has seen a lot of action and will greatly profit from Training now.", merc_name = unit.Nick })
-      unit.statGainingNotified = true
-    end
-  end
-
   --if pointsToGain >= 1 then
-  --  CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<merc_name> gaining <points> Train Points", merc_name = unit.Nick, points = pointsToGain })
+  --  CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> gaining <points> Train Points", nick = unit.Nick, points = pointsToGain })
   --end
-  unit.statGainingPoints = Min(30, unit.statGainingPoints + pointsToGain)
+  unit.statGainingPoints = unit.statGainingPoints + pointsToGain
 end
 
 SectorOperations.TrainMercs.Tick = function(self, merc)
@@ -211,7 +271,6 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
     local students = GetOperationProfessionals(sector.Id, self.id, "Student")
     local t_stat = merc[stat]
     for _, student in ipairs(students) do
-      student.statGainingNotified = false
       local is_learned_max = student[stat] >= t_stat or student[stat] > max_learned_stat
       if not is_learned_max then
         student.stat_learning = student.stat_learning or {}
@@ -222,6 +281,7 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
           progressPerTick = progressPerTick + MulDivRound(progressPerTick, bonusPercent, 100)
         end
 
+        -- mod start
         if student.statGainingPoints == 0 then
           progressPerTick = 1 + progressPerTick // 20
           if not student.stat_learning[stat] or student.stat_learning[stat].progress == 0 or InteractionRand(100) <= 1 then
@@ -230,6 +290,7 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
             end
           end
         end
+        -- mod end
 
         student.stat_learning[stat] = student.stat_learning[stat] or { progress = 0, up_levels = 0 }
         local learning_progress = student.stat_learning[stat].progress
@@ -237,7 +298,11 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
 
         local progress_threshold = self:ResolveValue("learning_speed") * student[stat] * (100 + self:ResolveValue("wisdow_weight") - Max(0, (student.Wisdom - 50) * 2)) / 100
         if learning_progress >= progress_threshold then
+
+          -- mod start
           student.statGainingPoints = Max(0, student.statGainingPoints - 1)
+          -- mod end
+
           local gainAmount = 1
           local modId = string.format("StatTraining-%s-%s-%d", stat, student.session_id, GetPreciseTicks())
           GainStat(student, stat, gainAmount, modId, "Training")
@@ -259,13 +324,9 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
 end
 
 local hasExtraStatGainProperty = false
-local hasStatGainNotifiedProperty = false
 for _, prop in ipairs(UnitProperties.properties) do
   if prop.id == 'statGainingPointsExtra' then
     hasExtraStatGainProperty = true
-  end
-  if prop.id == 'statGainingNotified' then
-    hasStatGainNotifiedProperty = true
   end
 end
 
@@ -278,20 +339,11 @@ if not hasExtraStatGainProperty then
   }
 end
 
-if not hasStatGainNotifiedProperty then
-  UnitProperties.properties[#UnitProperties.properties + 1] = {
-    category = "XP",
-    id = "statGainingNotified",
-    editor = "bool",
-    default = false,
-  }
-end
-
 local mercRolloverAttrsXt = audaFindXtByTextId(XTemplates.PDAMercRollover, 488971610056)
 if mercRolloverAttrsXt then
   mercRolloverAttrsXt.ContextUpdateOnOpen = true
   mercRolloverAttrsXt.OnContextUpdate = function(self, context, ...)
-    self:SetText(T(488971610056, "ATTRIBUTES") .. ' | <style CrosshairAPTotal>Available Train Points ' .. context.statGainingPoints .. ' / 30</style><newline>')
+    self:SetText(T(488971610056, "ATTRIBUTES") .. ' | <style CrosshairAPTotal>Available Train Points  ' .. context.statGainingPoints .. '</style>')
     return XContextControl.OnContextUpdate(self, context)
   end
 end
