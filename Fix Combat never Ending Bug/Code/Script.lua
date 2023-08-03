@@ -60,14 +60,16 @@ function Combat:ShouldEndDueToNoVisibility()
     self.turns_no_visibility = self.turns_no_visibility + 1
   end
 
-  local teamCount = 0
+  local activeTeamCount = 0
   for _, t in ipairs(g_Teams) do
     if #t.units >= 1 then
-      teamCount = teamCount + 1
+      activeTeamCount = activeTeamCount + 1
     end
   end
 
-  local isShallEnd = self.turns_no_visibility >= teamCount * 5
+  local configTurns = tonumber(CurrentModOptions['audaFixCombatNeverEndingFullTurnsForEnd'])
+  local realTurns = (1 + configTurns) * activeTeamCount
+  local isShallEnd = self.turns_no_visibility >= realTurns
   if isShallEnd then
 
     local p1Team = nil
