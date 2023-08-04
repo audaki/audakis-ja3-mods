@@ -106,9 +106,35 @@ end
 
 function RollForStatGaining(unit, stat, failChance)
 
+
+  local statAbbr = ''
+  if stat == 'Health' then
+    statAbbr = 'HLT'
+  elseif stat == 'Agility' then
+    statAbbr = 'AGI'
+  elseif stat == 'Dexterity' then
+    statAbbr = 'DEX'
+  elseif stat == 'Strength' then
+    statAbbr = 'STR'
+  elseif stat == 'Wisdom' then
+    statAbbr = 'WIS'
+  elseif stat == 'Leadership' then
+    statAbbr = 'LDR'
+  elseif stat == 'Marksmanship' then
+    statAbbr = 'MRK'
+  elseif stat == 'Mechanical' then
+    statAbbr = 'MEC'
+  elseif stat == 'Explosives' then
+    statAbbr = 'EXP'
+  elseif stat == 'Medical' then
+    statAbbr = 'MED'
+  end
+
+  local statBefore = unit[stat]
+
   local statGaining = GetMercStateFlag(unit.session_id, "StatGaining") or {}
   local cooldowns = statGaining.Cooldowns or {}
-  local success_text = "(fail) "
+  local prefix = "FAIL"
   local reason_text = ""
   local extraFailRoll = InteractionRand(100, "StatGaining")
   if not failChance or failChance <= extraFailRoll then
@@ -131,7 +157,7 @@ function RollForStatGaining(unit, stat, failChance)
           elseif stat == 'Leadership' then
             bonusToRoll = bonusToRoll + 20
           elseif stat == 'Marksmanship' then
-            bonusToRoll = bonusToRoll + 35
+            bonusToRoll = bonusToRoll + 28
           elseif stat == 'Mechanical' then
             bonusToRoll = bonusToRoll + 20
           elseif stat == 'Explosives' then
@@ -145,29 +171,39 @@ function RollForStatGaining(unit, stat, failChance)
           local threshold = thresholdBase + thresholdAdd - bonusToRoll
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
-          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. ' + ' .. thresholdAdd .. ' - ' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
+          --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
+          reason_text = T({'roll (<chance>%)', stat = unit[stat], chance = 100 - threshold})
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
             local cd = InteractionRandRange(const.StatGaining.PerStatCDMin, const.StatGaining.PerStatCDMax, "StatCooldown")
             cooldowns[stat] = Game.CampaignTime + cd
             statGaining.Cooldowns = cooldowns
-            success_text = "(success) "
+            prefix = "WIN"
           end
         else
-          reason_text = stat .. " too high"
+          reason_text = 'too high'
         end
       else
-        reason_text = stat .. " is in cooldown"
+        reason_text = 'roll cooldown'
       end
     else
-      reason_text = "Not enough milestone points"
+      reason_text = 'starved Train Points'
     end
   else
-    reason_text = "Fail chance procced, need: " .. failChance .. ", Rolled: " .. extraFailRoll
+    reason_text = 'extraFail (' .. failChance .. '%)'
   end
 
-  CombatLog(ttsjIsRelease and "debug" or "important", success_text .. _InternalTranslate(unit.Nick) .. " stat gain " .. stat .. ". " .. reason_text)
+  if statBefore <= 99 then
+    CombatLog(ttsjIsRelease and "debug" or "important", T({
+      '<prefix> <nick> <statAbbr>(<statBefore>) <reason>',
+      prefix = prefix,
+      nick = unit.Nick,
+      statAbbr = statAbbr,
+      statBefore = statBefore,
+      reason = reason_text,
+    }))
+  end
 
   SetMercStateFlag(unit.session_id, "StatGaining", statGaining)
 end
@@ -179,7 +215,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
   local calcXpThresholds = function(level)
     local out = {}
-    local pointsForLevel = const.StatGaining.PointsPerLevel + Clamp(level, 1, 9)
+    local pointsForLevel = 2 + Clamp(level, 1, 9)
     local interval = 1000 // pointsForLevel
     for i = 1, pointsForLevel - 1 do
       out[#out + 1] = (out[#out] or 0) + interval
@@ -193,15 +229,16 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local pointsToGain = 0
 
   if 0 < xpGain then
-    unit.statGainingPointsExtra = (unit.statGainingPointsExtra or 0) + 300 + (5 * unit['Wisdom'])
+    local sgeIncrease = 300 + (5 * unit['Wisdom'])
     if unit.statGainingPoints <= 4 then
-      unit.statGainingPointsExtra = unit.statGainingPointsExtra + InteractionRand(5000 - (1000 * unit.statGainingPoints))
+      sgeIncrease = sgeIncrease + InteractionRand(5000 - (1000 * unit.statGainingPoints))
     end
-    --CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.statGainingPointsExtra = <extra_points>", nick = unit.Nick, extra_points = unit.statGainingPointsExtra })
+    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.sge = <sge> + <sge_increase>", nick = unit.Nick, sge_increase = sgeIncrease, sge = unit.statGainingPointsExtra })
+    unit.statGainingPointsExtra = unit.statGainingPointsExtra + sgeIncrease
   end
 
   while unit.statGainingPointsExtra >= 10000 do
-    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> +1 Train Point for statGainingPointsExtra", nick = unit.Nick })
+    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> +1 Train Point (sge)", nick = unit.Nick })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
