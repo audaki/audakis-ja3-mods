@@ -171,7 +171,7 @@ function RollForStatGaining(unit, stat, failChance)
           local threshold = thresholdBase + thresholdAdd - bonusToRoll
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
-          --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
+          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
           reason_text = T({'roll (<chance>%)', stat = unit[stat], chance = 100 - threshold})
           if threshold <= roll then
             GainStat(unit, stat)
@@ -227,13 +227,25 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local xp = unit.Experience
   local xpPercent, level = CalcXpPercentAndLevel(xp)
   local pointsToGain = 0
+  local sgp = unit.statGainingPoints
 
   if 0 < xpGain then
     local sgeIncrease = 300 + (5 * unit['Wisdom'])
-    if unit.statGainingPoints <= 4 then
-      sgeIncrease = sgeIncrease + InteractionRand(5000 - (1000 * unit.statGainingPoints))
+    if sgp <= 4 then
+      sgeIncrease = sgeIncrease + InteractionRand(7500 - (1500 * sgp))
+    -- between 5 and 14 do nothing
+    elseif sgp == 15 then
+      sgeIncrease = MulDivRound(sgeIncrease, 90, 100)
+    elseif sgp == 16 then
+      sgeIncrease = MulDivRound(sgeIncrease, 80, 100)
+    elseif sgp == 17 then
+      sgeIncrease = MulDivRound(sgeIncrease, 70, 100)
+    elseif sgp == 18 then
+      sgeIncrease = MulDivRound(sgeIncrease, 60, 100)
+    elseif sgp >= 19 then
+      sgeIncrease = MulDivRound(sgeIncrease, 50, 100)
     end
-    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.sge = <sge> + <sge_increase>", nick = unit.Nick, sge_increase = sgeIncrease, sge = unit.statGainingPointsExtra })
+    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick, sgeIncrease = sgeIncrease, sge = unit.statGainingPointsExtra })
     unit.statGainingPointsExtra = unit.statGainingPointsExtra + sgeIncrease
   end
 
@@ -380,7 +392,18 @@ local mercRolloverAttrsXt = audaFindXtByTextId(XTemplates.PDAMercRollover, 48897
 if mercRolloverAttrsXt then
   mercRolloverAttrsXt.ContextUpdateOnOpen = true
   mercRolloverAttrsXt.OnContextUpdate = function(self, context, ...)
-    self:SetText(T(488971610056, "ATTRIBUTES") .. ' | <style CrosshairAPTotal>Available Train Points  ' .. context.statGainingPoints .. '</style>')
+    local sgp = context.statGainingPoints
+    local boosted_text = ''
+    if sgp <= 4 then
+      boosted_text = '  <color PDASectorInfo_Yellow>(boosted)</color>'
+    end
+    if sgp >= 15 then
+      boosted_text = '  <color PDASM_NewSquadLabel>(slowed)</color>'
+    end
+    self:SetText(T(488971610056, "ATTRIBUTES") ..
+        T({' | <style CrosshairAPTotal>Avail Train Points <sgp></style><style InventoryRolloverPropSmall><boosted_text></style>',
+           sgp = sgp,
+           boosted_text = boosted_text}))
     return XContextControl.OnContextUpdate(self, context)
   end
 end
