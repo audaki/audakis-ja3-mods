@@ -232,7 +232,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   if 0 < xpGain then
     local sgeIncrease = 300 + (5 * unit['Wisdom'])
     if sgp <= 4 then
-      sgeIncrease = sgeIncrease + InteractionRand(7500 - (1500 * sgp))
+      sgeIncrease = sgeIncrease + 100 + InteractionRand(Max(500, (4000 + 60 * unit['Wisdom']) - (1500 * sgp)))
     -- between 5 and 14 do nothing
     elseif sgp == 15 then
       sgeIncrease = MulDivRound(sgeIncrease, 90, 100)

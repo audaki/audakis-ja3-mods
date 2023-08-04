@@ -7,14 +7,14 @@ return PlaceObj('ModDef', {
 	'content_path', "Mod/siTbckx/",
 	'author', "Audaki_ra",
 	'version_major', 1,
-	'version', 20,
+	'version', 30,
 	'lua_revision', 233360,
-	'saved_with_revision', 338408,
+	'saved_with_revision', 339125,
 	'code', {
 		"Code/Script.lua",
 	},
 	'has_options', true,
-	'saved', 1690981578,
-	'code_hash', 8604913796256505747,
+	'saved', 1691170687,
+	'code_hash', -7208974096229838745,
 	'steam_id', "3013767865",
 })
