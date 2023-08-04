@@ -1,6 +1,6 @@
 return PlaceObj('ModDef', {
 	'title', "Colored Ammo in Weapon",
-	'description', "Colorize Ammo in Weapons (same color they have when hovering the ammo in Squad Supplies)\n\nSafe to add and remove at any time\n\nEnjoy :-)",
+	'description', "Colorize Ammo in Weapons (same color they have when hovering the ammo in Squad Supplies)\n\nSafe to add and remove at any time.\n\nPS: Mod does not work together with *MaxStacks Tweaks*\n\nEnjoy :-)",
 	'image', "Mod/XadGsqw/Images/colored-ammo-in-weapons.png",
 	'last_changes', "Fix vanilla color of 9mm Shock to be same as .44 Shock",
 	'id', "XadGsqw",
@@ -8,13 +8,13 @@ return PlaceObj('ModDef', {
 	'author', "Audaki_ra",
 	'version_major', 1,
 	'version_minor', 1,
-	'version', 55,
+	'version', 57,
 	'lua_revision', 233360,
-	'saved_with_revision', 338408,
+	'saved_with_revision', 339125,
 	'code', {
 		"Code/Script.lua",
 	},
-	'saved', 1691018078,
+	'saved', 1691138623,
 	'code_hash', -737646886725627839,
 	'steam_id', "3014029872",
 })
