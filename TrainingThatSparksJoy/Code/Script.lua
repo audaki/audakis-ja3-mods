@@ -172,7 +172,7 @@ function RollForStatGaining(unit, stat, failChance)
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
           reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
-          reason_text = T({'roll (<chance>%)', stat = unit[stat], chance = 100 - threshold})
+          reason_text = T({'roll|CtR: <chance>%', stat = unit[stat], chance = 100 - threshold})
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
@@ -188,10 +188,10 @@ function RollForStatGaining(unit, stat, failChance)
         reason_text = 'roll cooldown'
       end
     else
-      reason_text = 'starved Train Points'
+      reason_text = '0 Train Points'
     end
   else
-    reason_text = 'extraFail (' .. failChance .. '%)'
+    reason_text = 'preFail|CtF: ' .. failChance .. '%'
   end
 
   if statBefore <= 99 then
@@ -232,7 +232,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   if 0 < xpGain then
     local sgeIncrease = 300 + (5 * unit['Wisdom'])
     if sgp <= 4 then
-      sgeIncrease = sgeIncrease + 100 + InteractionRand(Max(500, (4000 + 60 * unit['Wisdom']) - (1500 * sgp)))
+      sgeIncrease = sgeIncrease + Max((5 - sgp) * 100, InteractionRand((4000 + 60 * unit['Wisdom']) - (1500 * sgp)))
     -- between 5 and 14 do nothing
     elseif sgp == 15 then
       sgeIncrease = MulDivRound(sgeIncrease, 90, 100)
@@ -245,7 +245,10 @@ function ReceiveStatGainingPoints(unit, xpGain)
     elseif sgp >= 19 then
       sgeIncrease = MulDivRound(sgeIncrease, 50, 100)
     end
-    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick, sgeIncrease = sgeIncrease, sge = unit.statGainingPointsExtra })
+
+    --sgeIncrease = MulDivRound(tonumber(CurrentModOptions['ttsj'] or '100'))
+
+    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick, sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
     unit.statGainingPointsExtra = unit.statGainingPointsExtra + sgeIncrease
   end
 
@@ -333,9 +336,9 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
         -- mod start
         if student.statGainingPoints == 0 then
           progressPerTick = 1 + progressPerTick // 20
-          if not student.stat_learning[stat] or student.stat_learning[stat].progress == 0 or InteractionRand(100) <= 1 then
+          if not student.stat_learning[stat] or student.stat_learning[stat].progress == 0 then
             if CurrentModOptions['ttsj_showTrainingIneffectiveNotification'] then
-              CombatLog("important", T { 0, "<merc_nickname> is bored and needs to see action (earn XP). Training is only worth 5% now. (Not Enough Train Points)", merc_nickname = student.Nick })
+              CombatLog("important", T { 0, "<merc_nickname> used all Train Points", merc_nickname = student.Nick })
             end
           end
         end
@@ -393,17 +396,19 @@ if mercRolloverAttrsXt then
   mercRolloverAttrsXt.ContextUpdateOnOpen = true
   mercRolloverAttrsXt.OnContextUpdate = function(self, context, ...)
     local sgp = context.statGainingPoints
-    local boosted_text = ''
+    local postfix = ''
     if sgp <= 4 then
-      boosted_text = '  <color PDASectorInfo_Yellow>(boosted)</color>'
+      postfix = '  <style InventoryRolloverPropSmall><color PDASectorInfo_Yellow><alpha ' .. (50 + (5 - sgp) * 25)
+      postfix = postfix .. '>(boosted)</alpha></color></style>'
     end
     if sgp >= 15 then
-      boosted_text = '  <color PDASM_NewSquadLabel>(slowed)</color>'
+      postfix = '  <style InventoryRolloverPropSmall><color PDASM_NewSquadLabel><alpha ' .. Min(50 + (sgp - 14) * 25, 175)
+      postfix = postfix .. '>(slowed)</alpha></color></style>'
     end
     self:SetText(T(488971610056, "ATTRIBUTES") ..
-        T({' | <style CrosshairAPTotal>Avail Train Points <sgp></style><style InventoryRolloverPropSmall><boosted_text></style>',
+        T({' | <style CrosshairAPTotal>Avail Train Points <sgp></style><postfix>',
            sgp = sgp,
-           boosted_text = boosted_text}))
+           postfix = postfix}))
     return XContextControl.OnContextUpdate(self, context)
   end
 end
