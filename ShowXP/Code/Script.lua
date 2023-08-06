@@ -17,7 +17,7 @@ if mercRolloverEnergyXt then
   mercRolloverEnergyXt.ContextUpdateOnOpen = true
   mercRolloverEnergyXt.OnContextUpdate = function(self, context, ...)
     local level = CalcLevel(context.Experience)
-    local nextLevel = Min(10, level + 1)
+    local nextLevel = Min(#XPTable, level + 1)
     self:SetText('XP (Level ' .. level .. ') <right><style PDABrowserTextLightMedium>' .. context.Experience .. ' / ' .. XPTable[nextLevel] .. '</style><newline><left>' .. T(997240698559, "Energy<right><style PDABrowserTextLightMedium><EnergyStatusEffect()></style>"))
     return XContextControl.OnContextUpdate(self, context)
   end
