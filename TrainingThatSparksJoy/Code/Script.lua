@@ -215,7 +215,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
   local calcXpThresholds = function(level)
     local out = {}
-    local pointsForLevel = 2 + Clamp(level, 1, 9)
+    local pointsForLevel = 1 + Clamp(level, 1, 9)
     local interval = 1000 // pointsForLevel
     for i = 1, pointsForLevel - 1 do
       out[#out + 1] = (out[#out] or 0) + interval
@@ -232,7 +232,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   if 0 < xpGain then
     local sgeIncrease = 300 + (5 * unit['Wisdom'])
     if sgp <= 4 then
-      sgeIncrease = sgeIncrease + Max((5 - sgp) * 100, InteractionRand((4000 + 60 * unit['Wisdom']) - (1500 * sgp)))
+      sgeIncrease = sgeIncrease + Max((5 - sgp) * 100, InteractionRand((3000 + 50 * unit['Wisdom']) - (1000 * sgp)))
     -- between 5 and 14 do nothing
     elseif sgp == 15 then
       sgeIncrease = MulDivRound(sgeIncrease, 90, 100)
