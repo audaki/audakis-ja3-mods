@@ -164,9 +164,9 @@ function ReceiveStatGainingPoints(unit, xpGain)
       local maxBoost = 10 * minBoost
       local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
       if sgp == 1 then
-        sgeBoost = MulDivRound(sgeBoost, 75, 100)
+        sgeBoost = MulDivRound(sgeBoost, 85, 100)
       elseif sgp == 2 then
-        sgeBoost = MulDivRound(sgeBoost, 50, 100)
+        sgeBoost = MulDivRound(sgeBoost, 70, 100)
       elseif sgp == 3 then
         sgeBoost = MulDivRound(sgeBoost, 30, 100)
       elseif sgp == 4 then
