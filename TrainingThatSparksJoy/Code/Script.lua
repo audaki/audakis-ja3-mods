@@ -5,86 +5,9 @@ StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 
 StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
-const.StatGaining.PointsPerLevel = 2
+const.StatGaining.PointsPerLevel = 1
 const.StatGaining.MilestoneAfterMax = 666
 const.StatGaining.BonusToRoll = 15
-
-  UndefineClass('Loner')
-  DefineClass.Loner = {
-    __parents = { "Perk" },
-    __generated_by_class = "ModItemCharacterEffectCompositeDef",
-
-    __copy_group = "Quirk",
-    object_class = "Perk",
-    msg_reactions = {
-      PlaceObj('MsgReaction', {
-        Event = "TurnStart",
-        Handler = function (self, team)
-          local reaction_idx = table.find(self.msg_reactions or empty_table, "Event", "TurnStart")
-          if not reaction_idx then return end
-
-          local function exec(self, team)
-            for _, unit in ipairs(g_Units) do
-              if unit.team == team and HasPerk(unit, self.id) then
-                local proc = true
-                for _, other in ipairs(unit.team.units) do
-                  if unit ~= other and DivRound(unit:GetDist(other), const.SlabSizeX) <= self:ResolveValue("loner_radius") then
-                    proc = false
-                    break
-                  end
-                end
-
-                if proc then
-                  unit:AddStatusEffect("Inspired")
-                  PlayVoiceResponse(unit, "Loner")
-                end
-              end
-            end
-          end
-          local id = GetCharacterEffectId(self)
-
-          if id then
-            local objs = {}
-            for session_id, data in pairs(gv_UnitData) do
-              local obj = g_Units[session_id] or data
-              if obj:HasStatusEffect(id) then
-                objs[session_id] = obj
-              end
-            end
-            for _, obj in sorted_pairs(objs) do
-              exec(self, team)
-            end
-          else
-            exec(self, team)
-          end
-
-        end,
-        HandlerCode = function (self, team)
-          for _, unit in ipairs(g_Units) do
-            if unit.team == team and HasPerk(unit, self.id) then
-              local proc = true
-              for _, other in ipairs(unit.team.units) do
-                if unit ~= other and DivRound(unit:GetDist(other), const.SlabSizeX) <= self:ResolveValue("loner_radius") then
-                  proc = false
-                  break
-                end
-              end
-
-              if proc then
-                unit:AddStatusEffect("Inspired")
-                PlayVoiceResponse(unit, "Loner")
-              end
-            end
-          end
-        end,
-        param_bindings = false,
-      }),
-    },
-    DisplayName = T(643033597159, --[[ModItemCharacterEffectCompositeDef Loner DisplayName]] "Loner"),
-    Description = T(238527648977, --[[ModItemCharacterEffectCompositeDef Loner Description]] "Become <color EmStyle>Inspired</color> when there are no teammates <color EmStyle>in your vicinity</color> at turn start."),
-    Icon = "UI/Icons/Perks/Loner",
-    Tier = "Quirk",
-  }
 
 
 
@@ -105,7 +28,6 @@ function audaFindXtByTextId(obj, id)
 end
 
 function RollForStatGaining(unit, stat, failChance)
-
 
   local statAbbr = ''
   if stat == 'Health' then
@@ -171,15 +93,15 @@ function RollForStatGaining(unit, stat, failChance)
           local threshold = thresholdBase + thresholdAdd - bonusToRoll
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
-          reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
-          reason_text = T({'roll|CtR: <chance>%', stat = unit[stat], chance = 100 - threshold})
+          --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
+          reason_text = T({'roll|CtR: <chance>%', chance = 100 - threshold})
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
             local cd = InteractionRandRange(const.StatGaining.PerStatCDMin, const.StatGaining.PerStatCDMax, "StatCooldown")
             cooldowns[stat] = Game.CampaignTime + cd
             statGaining.Cooldowns = cooldowns
-            prefix = "WIN"
+            prefix = 'WIN'
           end
         else
           reason_text = 'too high'
@@ -198,7 +120,7 @@ function RollForStatGaining(unit, stat, failChance)
     CombatLog(ttsjIsRelease and "debug" or "important", T({
       '<prefix> <nick> <statAbbr>(<statBefore>) <reason>',
       prefix = prefix,
-      nick = unit.Nick,
+      nick = unit.Nick or 'Merc',
       statAbbr = statAbbr,
       statBefore = statBefore,
       reason = reason_text,
@@ -209,6 +131,7 @@ function RollForStatGaining(unit, stat, failChance)
 end
 
 function ReceiveStatGainingPoints(unit, xpGain)
+
   if HasPerk(unit, "OldDog") then
     return
   end
@@ -224,16 +147,20 @@ function ReceiveStatGainingPoints(unit, xpGain)
     return out
   end
 
-  local xp = unit.Experience
+  local xp = unit.Experience or 0
   local xpPercent, level = CalcXpPercentAndLevel(xp)
   local pointsToGain = 0
-  local sgp = unit.statGainingPoints
+  local sgp = unit.statGainingPoints or 0
+  local wis = unit.Wisdom or 50
 
   if 0 < xpGain then
     local sgeIncrease = 300 + (5 * unit['Wisdom'])
     if sgp <= 4 then
-      sgeIncrease = sgeIncrease + Max((5 - sgp) * 100, InteractionRand((3000 + 50 * unit['Wisdom']) - (1000 * sgp)))
-    -- between 5 and 14 do nothing
+      local guaranteedIncrease = 100 * (9 - sgp)
+      local maxIncrease = (50 * wis) + 3000 - (1000 * sgp)
+      -- InteractionRand gives back 2 variables which are both input into Max() unless you save into variable first
+      local randResult = InteractionRand(maxIncrease, 'StatGaining')
+      sgeIncrease = sgeIncrease + Max(guaranteedIncrease, randResult)
     elseif sgp == 15 then
       sgeIncrease = MulDivRound(sgeIncrease, 90, 100)
     elseif sgp == 16 then
@@ -248,12 +175,12 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
     --sgeIncrease = MulDivRound(tonumber(CurrentModOptions['ttsj'] or '100'))
 
-    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick, sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
-    unit.statGainingPointsExtra = unit.statGainingPointsExtra + sgeIncrease
+    CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick or 'Merc', sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
+    unit.statGainingPointsExtra = floatfloor((unit.statGainingPointsExtra or 0) + sgeIncrease + 0.5)
   end
 
   while unit.statGainingPointsExtra >= 10000 do
-    CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> +1 Train Point (sge)", nick = unit.Nick })
+    CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Point (sge)", nick = unit.Nick or 'Merc' })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
@@ -269,7 +196,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
     for i = 1, #xpThresholds do
       if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> +1 Train Point for XP threshold", nick = unit.Nick })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Point for XP threshold", nick = unit.Nick or 'Merc' })
         pointsToGain = pointsToGain + 1
       end
     end
@@ -290,7 +217,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       xp = xp + tempXp
       xpGain = xpGain - tempXp
       if xpToMilestone <= tempXp then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> got Train Point for XP milestone threshold", nick = unit.Nick })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Point (milestone)", nick = unit.Nick or 'Merc' })
         pointsToGain = pointsToGain + 1
         xpSinceLastMilestone = 0
         milestone = milestone + increment
@@ -299,7 +226,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   end
 
   --if pointsToGain >= 1 then
-  --  CombatLog(ttsjIsRelease and "debug" or "important", T { 0, "<nick> gaining <points> Train Points", nick = unit.Nick, points = pointsToGain })
+  --  CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> gaining <points> Train Points", nick = unit.Nick or 'Merc', points = pointsToGain })
   --end
   unit.statGainingPoints = unit.statGainingPoints + pointsToGain
 end
@@ -395,13 +322,12 @@ local mercRolloverAttrsXt = audaFindXtByTextId(XTemplates.PDAMercRollover, 48897
 if mercRolloverAttrsXt then
   mercRolloverAttrsXt.ContextUpdateOnOpen = true
   mercRolloverAttrsXt.OnContextUpdate = function(self, context, ...)
-    local sgp = context.statGainingPoints
+    local sgp = context.statGainingPoints or 0
     local postfix = ''
     if sgp <= 4 then
       postfix = '  <style InventoryRolloverPropSmall><color PDASectorInfo_Yellow><alpha ' .. (50 + (5 - sgp) * 25)
       postfix = postfix .. '>(boosted)</alpha></color></style>'
-    end
-    if sgp >= 15 then
+    elseif sgp >= 15 then
       postfix = '  <style InventoryRolloverPropSmall><color PDASM_NewSquadLabel><alpha ' .. Min(50 + (sgp - 14) * 25, 175)
       postfix = postfix .. '>(slowed)</alpha></color></style>'
     end
