@@ -63,32 +63,32 @@ function RollForStatGaining(unit, stat, failChance)
       if not cooldowns[stat] or cooldowns[stat] <= Game.CampaignTime then
         if 0 < unit[stat] and unit[stat] < 100 then
 
-          local bonusToRoll = 0
+          local bonusToRoll = 5
 
           if stat == 'Health' then
-            bonusToRoll = bonusToRoll + 12
+            bonusToRoll = bonusToRoll + 5
           elseif stat == 'Agility' then
-            bonusToRoll = bonusToRoll + 7
+            bonusToRoll = bonusToRoll
           elseif stat == 'Dexterity' then
-            bonusToRoll = bonusToRoll + 12
+            bonusToRoll = bonusToRoll + 5
           elseif stat == 'Strength' then
-            bonusToRoll = bonusToRoll + 12
+            bonusToRoll = bonusToRoll + 5
           elseif stat == 'Wisdom' then
-            bonusToRoll = bonusToRoll + 7
+            bonusToRoll = bonusToRoll
           elseif stat == 'Leadership' then
-            bonusToRoll = bonusToRoll + 20
+            bonusToRoll = bonusToRoll + 10
           elseif stat == 'Marksmanship' then
-            bonusToRoll = bonusToRoll + 28
+            bonusToRoll = bonusToRoll + 15
           elseif stat == 'Mechanical' then
-            bonusToRoll = bonusToRoll + 20
+            bonusToRoll = bonusToRoll + 10
           elseif stat == 'Explosives' then
-            bonusToRoll = bonusToRoll + 20
+            bonusToRoll = bonusToRoll + 10
           elseif stat == 'Medical' then
-            bonusToRoll = bonusToRoll + 20
+            bonusToRoll = bonusToRoll + 10
           end
 
           local thresholdBase = unit[stat]
-          local thresholdAdd = floatfloor((100 - unit[stat]) // 2.5)
+          local thresholdAdd = floatfloor((100 - unit[stat]) // 2)
           local threshold = thresholdBase + thresholdAdd - bonusToRoll
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
@@ -164,13 +164,13 @@ function ReceiveStatGainingPoints(unit, xpGain)
       local maxBoost = 10 * minBoost
       local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
       if sgp == 1 then
-        sgeBoost = MulDivRound(sgeBoost, 85, 100)
+        sgeBoost = MulDivRound(sgeBoost, 90, 100)
       elseif sgp == 2 then
-        sgeBoost = MulDivRound(sgeBoost, 60, 100)
+        sgeBoost = MulDivRound(sgeBoost, 70, 100)
       elseif sgp == 3 then
-        sgeBoost = MulDivRound(sgeBoost, 30, 100)
+        sgeBoost = MulDivRound(sgeBoost, 40, 100)
       elseif sgp == 4 then
-        sgeBoost = MulDivRound(sgeBoost, 15, 100)
+        sgeBoost = MulDivRound(sgeBoost, 20, 100)
       end
       sgeIncrease = sgeIncrease + sgeBoost
     elseif sgp == 15 then
