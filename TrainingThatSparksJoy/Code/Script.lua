@@ -55,7 +55,7 @@ function RollForStatGaining(unit, stat, failChance)
 
   local statGaining = GetMercStateFlag(unit.session_id, "StatGaining") or {}
   local cooldowns = statGaining.Cooldowns or {}
-  local prefix = "FAIL"
+  local prefix = 'FAIL'
   local reason_text = ""
   local extraFailRoll = InteractionRand(100, "StatGaining")
   if not failChance or failChance <= extraFailRoll then
@@ -93,7 +93,7 @@ function RollForStatGaining(unit, stat, failChance)
           local rollBase = InteractionRand(100, "StatGaining") + 1
           local roll = rollBase
           --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
-          reason_text = T({'roll|CtR: <chance>%', chance = 100 - threshold})
+          reason_text = T({'CtR: <chance>%', chance = 100 - threshold})
           if threshold <= roll then
             GainStat(unit, stat)
             unit.statGainingPoints = unit.statGainingPoints - 1
@@ -101,23 +101,28 @@ function RollForStatGaining(unit, stat, failChance)
             cooldowns[stat] = Game.CampaignTime + cd
             statGaining.Cooldowns = cooldowns
             prefix = 'WIN'
+          else
+            prefix = 'MISS'
           end
         else
+          prefix = 'LIMIT'
           reason_text = 'too high'
         end
       else
+        prefix = 'CD'
         reason_text = 'roll cooldown'
       end
     else
+      prefix='0TP'
       reason_text = '0 Train Points'
     end
   else
-    reason_text = 'preFail|CtF: ' .. failChance .. '%'
+    reason_text = 'CtF: ' .. failChance .. '%'
   end
 
   if statBefore <= 99 then
     CombatLog(ttsjIsRelease and "debug" or "important", T({
-      '<prefix> <nick> <statAbbr>(<statBefore>) <reason>',
+      'SG:<prefix> <nick> <statAbbr>(<statBefore>) <reason>',
       prefix = prefix,
       nick = unit.Nick or 'Merc',
       statAbbr = statAbbr,
@@ -334,9 +339,6 @@ if mercRolloverAttrsXt then
     if sgp <= 4 then
       postfix = '  <style InventoryRolloverPropSmall><color PDASectorInfo_Yellow><alpha ' .. (50 + (5 - sgp) * 25)
       postfix = postfix .. '>(boosted)</alpha></color></style>'
-    elseif sgp >= 15 then
-      postfix = '  <style InventoryRolloverPropSmall><color PDASM_NewSquadLabel><alpha ' .. Min(50 + (sgp - 14) * 25, 175)
-      postfix = postfix .. '>(slowed)</alpha></color></style>'
     end
     self:SetText(T(488971610056, "ATTRIBUTES") ..
         T({' | <style CrosshairAPTotal>Avail Train Points <sgp></style><postfix>',
