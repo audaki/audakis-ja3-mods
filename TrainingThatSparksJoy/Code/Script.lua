@@ -5,7 +5,6 @@ StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 
 StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
-const.StatGaining.PointsPerLevel = 1
 const.StatGaining.MilestoneAfterMax = 666
 const.StatGaining.BonusToRoll = 15
 
@@ -154,13 +153,21 @@ function ReceiveStatGainingPoints(unit, xpGain)
   local wis = unit.Wisdom or 50
 
   if 0 < xpGain then
-    local sgeIncrease = 300 + (5 * unit['Wisdom'])
+    local sgeIncrease = 5 * wis + 300
     if sgp <= 4 then
-      local guaranteedIncrease = 100 * (9 - sgp)
-      local maxIncrease = (50 * wis) + 3000 - (1000 * sgp)
-      -- InteractionRand gives back 2 variables which are both input into Max() unless you save into variable first
-      local randResult = InteractionRand(maxIncrease, 'StatGaining')
-      sgeIncrease = sgeIncrease + Max(guaranteedIncrease, randResult)
+      local minBoost = sgeIncrease
+      local maxBoost = 10 * minBoost
+      local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
+      if sgp == 1 then
+        sgeBoost = MulDivRound(sgeBoost, 85, 100)
+      elseif sgp == 2 then
+        sgeBoost = MulDivRound(sgeBoost, 60, 100)
+      elseif sgp == 3 then
+        sgeBoost = MulDivRound(sgeBoost, 35, 100)
+      elseif sgp == 4 then
+        sgeBoost = MulDivRound(sgeBoost, 15, 100)
+      end
+      sgeIncrease = sgeIncrease + sgeBoost
     elseif sgp == 15 then
       sgeIncrease = MulDivRound(sgeIncrease, 90, 100)
     elseif sgp == 16 then
