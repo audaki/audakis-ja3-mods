@@ -5,7 +5,7 @@ function FirearmBase:GetNumModifiableComponents()
     local component = self.components[slot.SlotType]
     -- Non-modifiable slots broke the perk
     -- Slots with only 1 available component broke the perk
-    if component and slot.Modifiable and #slot.AvailableComponents >= 2 then
+    if component and slot.Modifiable and (#slot.AvailableComponents >= 2 or slot.CanBeEmpty) then
       n = n + 1
     end
   end
@@ -13,5 +13,5 @@ function FirearmBase:GetNumModifiableComponents()
 end
 
 function FirearmBase:IsFullyModified()
-  return self:GetNumAttachedComponents() == self:GetNumModifiableComponents()
+  return self:GetNumAttachedComponents() >= self:GetNumModifiableComponents()
 end
