@@ -2,6 +2,9 @@ return {
 PlaceObj('ModItemCode', {
 	'CodeFileName', "Code/Script.lua",
 }),
+PlaceObj('ModItemCode', {
+	'CodeFileName', "Code/Dev-Util.lua",
+}),
 PlaceObj('ModItemOptionNumber', {
 	'name', "testModTestOptionasdadqwdqdqwd",
 	'comment', "test",
