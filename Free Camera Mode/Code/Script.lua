@@ -19,5 +19,6 @@ if FirstLoad then
   sc.__condition = nil
 
   table.insert(xt, audaFindXtByActionId(xt, 'G_HideCombatUI'))
+  table.insert(xt, audaFindXtByActionId(xt, 'G_HideWorldCombatUI'))
   table.insert(xt, audaFindXtByActionId(xt, 'ToggleCMT'))
 end
