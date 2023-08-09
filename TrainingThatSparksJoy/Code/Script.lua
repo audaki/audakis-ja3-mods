@@ -63,46 +63,45 @@ function RollForStatGaining(unit, stat, failChance)
       if not cooldowns[stat] or cooldowns[stat] <= Game.CampaignTime then
         if 0 < unit[stat] and unit[stat] < 100 then
 
-          local bonusToRoll = 5
+          local bonusToRoll = 3
 
           if stat == 'Health' then
-            bonusToRoll = bonusToRoll + 5
+            bonusToRoll = bonusToRoll + 3
           elseif stat == 'Agility' then
             bonusToRoll = bonusToRoll
           elseif stat == 'Dexterity' then
-            bonusToRoll = bonusToRoll + 5
+            bonusToRoll = bonusToRoll + 3
           elseif stat == 'Strength' then
             bonusToRoll = bonusToRoll + 5
           elseif stat == 'Wisdom' then
             bonusToRoll = bonusToRoll
           elseif stat == 'Leadership' then
-            bonusToRoll = bonusToRoll + 10
+            bonusToRoll = bonusToRoll + 7
           elseif stat == 'Marksmanship' then
-            bonusToRoll = bonusToRoll + 15
+            bonusToRoll = bonusToRoll + 12
           elseif stat == 'Mechanical' then
-            bonusToRoll = bonusToRoll + 10
+            bonusToRoll = bonusToRoll + 7
           elseif stat == 'Explosives' then
-            bonusToRoll = bonusToRoll + 10
+            bonusToRoll = bonusToRoll + 7
           elseif stat == 'Medical' then
-            bonusToRoll = bonusToRoll + 10
+            bonusToRoll = bonusToRoll + 7
           end
 
           local thresholdBase = unit[stat]
-          local thresholdAdd = floatfloor((100 - unit[stat]) // 2)
+          local thresholdAdd = floatfloor((100 - unit[stat]) / 1.8)
           local threshold = thresholdBase + thresholdAdd - bonusToRoll
-          local rollBase = InteractionRand(100, "StatGaining") + 1
-          local roll = rollBase
+          local roll = InteractionRand(100, "StatGaining")
           --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
           reason_text = T({'CtR: <chance>%', chance = 100 - threshold})
           if threshold <= roll then
-            GainStat(unit, stat)
-            unit.statGainingPoints = unit.statGainingPoints - 1
-            local cd = InteractionRandRange(const.StatGaining.PerStatCDMin, const.StatGaining.PerStatCDMax, "StatCooldown")
-            cooldowns[stat] = Game.CampaignTime + cd
-            statGaining.Cooldowns = cooldowns
-            prefix = 'WIN'
+          GainStat(unit, stat)
+          unit.statGainingPoints = unit.statGainingPoints - 1
+          local cd = InteractionRandRange(const.StatGaining.PerStatCDMin, const.StatGaining.PerStatCDMax, "StatCooldown")
+          cooldowns[stat] = Game.CampaignTime + cd
+          statGaining.Cooldowns = cooldowns
+          prefix = 'WIN'
           else
-            prefix = 'MISS'
+          prefix = 'MISS'
           end
         else
           prefix = 'LIMIT'
