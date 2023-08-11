@@ -1,24 +1,46 @@
 
 
+local cthPresets = Presets.ChanceToHitModifier.Default
+
+if cthPresets.ASniperRifleShot then
+  cthPresets.ASniperRifleShot:Done()
+end
 
 PlaceObj('ChanceToHitModifier', {
   CalcValue = function (self, attacker, target, body_part_def, action, weapon1, weapon2, lof, aim, opportunity_attack, attacker_pos, target_pos)
     local mod = 0
     local side = attacker and attacker.team and attacker.team.side or ''
     if (side == 'player1' or side == 'player2') and IsKindOfClasses(weapon1, "SniperRifle") then
-      mod = Min(0, -100 + attacker.Marksmanship + (2 * aim))
+      mod = Min(0, -147 + attacker.Marksmanship + (attacker.Dexterity / 2) + (5 * aim))
     end
-    return mod ~= 0, mod, T{"Sniper Rifle Shot"}
+
+    if mod == 0 then
+      return false, 0, T{"Sniper Rifle Shot"}
+    else
+      if aim == 0 then
+        return true, mod, T{"Sniper: Hipshot"}
+      elseif aim <= 2 then
+        return true, mod, T{"Sniper: Quick Aim"}
+      else
+        return true, mod, T{"Sniper: Untrained"}
+      end
+    end
   end,
   RequireTarget = true,
   display_name = T("Sniper Rifle"),
   group = "Default",
-  id = "SniperRifleShot",
+  id = "ASniperRifleShot",
 })
 
-local cthPresets = Presets['ChanceToHitModifier']['Default']
-local sniperRiflePreset = cthPresets.SniperRifleShot
-if cthPresets[#cthPresets] == sniperRiflePreset then
-  table.remove(cthPresets, #cthPresets)
-  table.insert(cthPresets, 1, sniperRiflePreset)
+cthPresets.ASniperRifleShot:SortPresets()
+
+
+function OnMsg.ReloadLua()
+  local isBeingDisabled = not table.find(ModsLoaded, 'id', CurrentModId)
+  if isBeingDisabled then
+    if cthPresets.ASniperRifleShot then
+      cthPresets.ASniperRifleShot:Done()
+    end
+  end
 end
+
