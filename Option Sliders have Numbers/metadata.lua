@@ -1,0 +1,20 @@
+return PlaceObj('ModDef', {
+	'title', "Option Sliders have Numbers!",
+	'description', "[h2]For Players[/h2]\nOption Sliders, especially Volume Sliders, should have Numbers.\n\nVolume and other Sliders now show Percent with this mod :-)\n\nThis is also a library for mods to show data and numbers on their Option Sliders.\n\n[h2]For Mod Authors[/h2]\nYou can set your own display type and postfix\n- valueDisplayType (supports showAll, percent, value and valueWithMax)\n- valueDisplayPostfix (shows a postfix like '$', 'XP', '%' or any other string)\n\ncan be setup like this:\n[code]\nif Zulib.setupModSlider then\n  Zulib.setupModSlider({\n    modId = CurrentModId,\n    optionId = 'myOptionId',\n    displayType = 'value',\n    displayPostfix = '%',\n  })\nend\n\n-- or\n\nif Zulib.setupModSlider then\n  Zulib.setupModSlider({\n    modId = CurrentModId,\n    optionId = 'myOptionId',\n    displayType = 'valueWithMax',\n  })\nend\n[/code]",
+	'image', "Mod/0175sliders/Images/option-sliders-have-numbers.png",
+	'last_changes', "Update to 2.0, support external mods",
+	'dependencies', {},
+	'id', "0175sliders",
+	'content_path', "Mod/0175sliders/",
+	'author', "Audaki_ra",
+	'version_major', 2,
+	'version', 5,
+	'lua_revision', 233360,
+	'saved_with_revision', 339125,
+	'code', {
+		"Code/Script.lua",
+	},
+	'saved', 1691855133,
+	'code_hash', -253268616264955804,
+	'steam_id', "3016669641",
+})

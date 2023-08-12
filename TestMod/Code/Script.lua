@@ -1,3 +1,20 @@
+
+
+if Zulib.setupModSlider then
+  Zulib.setupModSlider({
+    modId = CurrentModId,
+    optionId = 'myOptionId',
+    displayType = 'valueWithMax',
+    displayPostfix = '$',
+  })
+end
+
+
+
+
+
+
+
 --
 --
 --CombatActions.BurstFire.GetActionResults = function (self, unit, args)

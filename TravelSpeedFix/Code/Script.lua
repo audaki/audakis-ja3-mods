@@ -94,6 +94,9 @@ function GetSectorTravelTime(from_sector_id, to_sector_id, route, units, pass_mo
     if tsf_mode == 'Fast' then
         squadModifier = squadModifier + 50
         squadModifier = MulDivRound(squadModifier, 240, 100)
+    elseif tsf_mode == 'Balanced' then
+        squadModifier = squadModifier + 50
+        squadModifier = MulDivRound(squadModifier, 170, 100)
     elseif tsf_mode == 'Normal' then
         squadModifier = squadModifier + 50
     end

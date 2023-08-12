@@ -136,8 +136,8 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
   local calcXpThresholds = function(level)
     local out = {}
-    local pointsForLevel = 1 + Clamp(level, 1, 9)
-    local interval = 1000 // pointsForLevel
+    local pointsForLevel = 1 + (Clamp(level, 1, 9) / 2)
+    local interval = 1000 / pointsForLevel
     for i = 1, pointsForLevel - 1 do
       out[#out + 1] = (out[#out] or 0) + interval
     end
@@ -161,7 +161,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       SetMercStateFlag(unit.session_id, "StatGaining", sgData)
     end
 
-    local sgeIncrease = 5 * wis + 300
+    local sgeIncrease = 2 * wis + 100
     if sgp <= 4 then
       local minBoost = sgeIncrease
       local maxBoost = 4 * minBoost
@@ -192,12 +192,12 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
     --sgeIncrease = MulDivRound(tonumber(CurrentModOptions['ttsj'] or '100'))
 
-    CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick or 'Merc', sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
+    --CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick or 'Merc', sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
     unit.statGainingPointsExtra = floatfloor((unit.statGainingPointsExtra or 0) + sgeIncrease + 0.5)
   end
 
   while unit.statGainingPointsExtra >= 10000 do
-    CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Point (sge)", nick = unit.Nick or 'Merc' })
+    CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Boost (sge)", nick = unit.Nick or 'Merc' })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
@@ -213,7 +213,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
     for i = 1, #xpThresholds do
       if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Point for XP threshold", nick = unit.Nick or 'Merc' })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Boost (threshold)", nick = unit.Nick or 'Merc' })
         pointsToGain = pointsToGain + 1
       end
     end
@@ -234,7 +234,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       xp = xp + tempXp
       xpGain = xpGain - tempXp
       if xpToMilestone <= tempXp then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Point (milestone)", nick = unit.Nick or 'Merc' })
+        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Boost (milestone)", nick = unit.Nick or 'Merc' })
         pointsToGain = pointsToGain + 1
         xpSinceLastMilestone = 0
         milestone = milestone + increment
@@ -253,7 +253,7 @@ function OnMsg.MercHireStatusChanged(unit_data, previousState, newState)
 
     local sgData = GetMercStateFlag(unit_data.session_id, "StatGaining") or {}
     if not sgData.Cooldowns then
-      sgData.Cooldown = {}
+      sgData.Cooldowns = {}
     end
 
     for _, stat in ipairs({
@@ -263,10 +263,27 @@ function OnMsg.MercHireStatusChanged(unit_data, previousState, newState)
       sgData.Cooldowns[stat] = Game.CampaignTime + InteractionRandRange(0, 432000, "StatCooldown")
     end
 
-    SetMercStateFlag(unit.session_id, "StatGaining", sgData)
+    SetMercStateFlag(unit_data.session_id, "StatGaining", sgData)
 
   end
 end
+
+for _, param in ipairs(SectorOperations.TrainMercs.Parameters) do
+  if param.Name == 'ActivityDurationInHoursFull' then
+    param.Value = 12
+  end
+end
+g_PresetParamCache[SectorOperations.TrainMercs]['ActivityDurationInHoursFull'] = 12
+
+
+SectorOperations.TrainMercs.ProgressPerTick = function (self, merc, prediction)
+  local progressPerTick = self:ResolveValue("PerTickProgress")
+  if CheatEnabled("FastActivity") then
+    progressPerTick = progressPerTick*100
+  end
+  return progressPerTick
+end
+
 
 SectorOperations.TrainMercs.Tick = function(self, merc)
   --Learning speed parameter defines the treshold of how much must be gained to gain 1 in a stat. Bigger number means slower.
@@ -275,7 +292,6 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
   if self:ProgressCurrent(merc, sector) >= self:ProgressCompleteThreshold(merc, sector) then
     return
   end
-  local max_learned_stat = self:ResolveValue("max_learned_stat")
   if merc.OperationProfession == "Student" then
     local teachers = GetOperationProfessionals(sector.Id, self.id, "Teacher")
     local teacher = teachers[1]
@@ -298,19 +314,21 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
           local bonusPercent = CharacterEffectDefs.Teacher:ResolveValue("MercTrainingBonus")
           progressPerTick = progressPerTick + MulDivRound(progressPerTick, bonusPercent, 100)
         end
+
+
         -- mod start
         if #students >= 2 then
-          progressPerTick = MulDivRound(progressPerTick, 100, 100 + 80 * (#students - 1))
+          progressPerTick = MulDivRound(progressPerTick, 100, 100 + 50 * (#students - 1))
         end
 
         if student.statGainingPoints == 0 then
-          progressPerTick = Max(5, MulDivRound(progressPerTick, 100, 2000))
-          if not student.stat_learning[stat] or student.stat_learning[stat].progress == 0 then
-            if CurrentModOptions['ttsj_showTrainingIneffectiveNotification'] then
-              CombatLog("important", T { 0, "<merc_nickname> used all Train Points", merc_nickname = student.Nick })
-            end
-          end
+          progressPerTick = MulDivRound(progressPerTick, 100, 500)
+        else
+          progressPerTick = MulDivRound(progressPerTick, 500, 100)
         end
+
+        -- Ensure minimum progress
+        progressPerTick = Max(5, progressPerTick)
         -- mod end
 
         student.stat_learning[stat] = student.stat_learning[stat] or { progress = 0, up_levels = 0 }
@@ -319,9 +337,11 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
 
         local progress_threshold = self:ResolveValue("learning_speed") * student[stat] * (100 + self:ResolveValue("wisdow_weight") - Max(0, (student.Wisdom - 50) * 2)) / 100
 
-        if student[stat] >= 64 then
-          progress_threshold = MulDivRound(progress_threshold, 100 + 20 * (student[stat] - 63), 100)
+        -- mod start
+        if student[stat] >= 65 then
+          progress_threshold = MulDivRound(progress_threshold, 100 + 10 * (student[stat] - 64), 100)
         end
+        -- mod end
 
         if learning_progress >= progress_threshold then
 
@@ -372,8 +392,8 @@ if mercRolloverAttrsXt then
     local sgp = context.statGainingPoints or 0
     local postfix = ''
     if sgp <= 4 then
-      postfix = '  <style InventoryRolloverPropSmall><color PDASectorInfo_Yellow><alpha ' .. (50 + (5 - sgp) * 25)
-      postfix = postfix .. '>(fast gain)</alpha></color></style>'
+      postfix = '  <style InventoryRolloverPropSmall><color PDASectorInfo_Yellow><alpha ' .. (25 * (5 - sgp))
+      postfix = postfix .. '>(faster gain)</alpha></color></style>'
     end
     self:SetText(T(488971610056, "ATTRIBUTES") ..
         T({ ' | <style CrosshairAPTotal>TRAIN BOOSTS <sgp></style><postfix>',
