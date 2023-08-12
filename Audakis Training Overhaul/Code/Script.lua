@@ -94,7 +94,6 @@ function RollForStatGaining(unit, stat, failChance)
         reason_text = T({ 'CtR: <chance>%', chance = 99 - threshold })
         if threshold < roll then
           GainStat(unit, stat)
-          unit.statGainingPoints = unit.statGainingPoints - 1
           local cd = InteractionRandRange(216000, 648000, "StatCooldown")
           cooldowns[stat] = Game.CampaignTime + cd
           statGaining.Cooldowns = cooldowns
