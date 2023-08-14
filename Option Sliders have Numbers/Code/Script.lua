@@ -25,7 +25,7 @@ Zulib.setupModSlider = function(cfg)
     return
   end
 
-  for _, option in ipairs(mod.GetOptionItems and mod:GetOptionItems() or {}) do
+  for _, option in ipairs(mod.GetOptionItems and mod:GetOptionItems()) do
     if option.name == cfg.optionId then
       option.GetOptionMeta = function(self)
         local meta = ModItemOptionNumber.GetOptionMeta(self)
@@ -41,7 +41,7 @@ Zulib.setupModSlider = function(cfg)
   end
 
 
-  for _, meta in ipairs(mod.options and mod.options.properties or {}) do
+  for _, meta in ipairs(mod.options and mod.options.properties) do
     if meta.id == cfg.optionId then
       if cfg.displayType then
         meta.valueDisplayType = cfg.displayType
