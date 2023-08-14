@@ -191,7 +191,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
 
   local calcXpThresholds = function(level)
     local out = {}
-    local pointsForLevel = floatfloor(2 + Clamp(level - 1, 0, 8) / 2)
+    local pointsForLevel = floatfloor(1 + Clamp(level - 1, 0, 8) / 2)
     local interval = 1000 / pointsForLevel
     for i = 1, pointsForLevel - 1 do
       out[#out + 1] = (out[#out] or 0) + interval
@@ -216,10 +216,10 @@ function ReceiveStatGainingPoints(unit, xpGain)
       SetMercStateFlag(unit.session_id, "StatGaining", sgData)
     end
 
-    local sgeIncrease = 100 + MulDivRound(wis, 150, 100)
+    local sgeIncrease = 100 + MulDivRound(wis, 75, 100)
     if sgp <= 4 then
-      local minBoost = MulDivRound(sgeIncrease, 200, 100)
-      local maxBoost = MulDivRound(sgeIncrease, 250, 100)
+      local minBoost = MulDivRound(sgeIncrease, 75, 100)
+      local maxBoost = MulDivRound(sgeIncrease, 125, 100)
       local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
       if sgp == 1 then
         sgeBoost = MulDivRound(sgeBoost, 80, 100)
