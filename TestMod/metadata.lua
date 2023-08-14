@@ -3,14 +3,13 @@ return PlaceObj('ModDef', {
 	'id', "zzzAudakiTestMod",
 	'content_path', "Mod/zzzAudakiTestMod/",
 	'author', "Audaki_ra",
-	'version', 557,
+	'version', 558,
 	'lua_revision', 233360,
 	'saved_with_revision', 339125,
 	'code', {
 		"Code/Dev-Utils.lua",
 		"Code/Script.lua",
 	},
-	'has_options', true,
-	'saved', 1691852802,
-	'code_hash', -1747254354368175485,
+	'saved', 1691878203,
+	'code_hash', 1227217089013114479,
 })

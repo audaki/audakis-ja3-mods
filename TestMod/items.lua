@@ -6,9 +6,4 @@ PlaceObj('ModItemCode', {
 PlaceObj('ModItemCode', {
 	'CodeFileName', "Code/Script.lua",
 }),
-PlaceObj('ModItemOptionNumber', {
-	'name', "myOptionId",
-	'DisplayName', "testOption",
-	'DefaultValue', 5,
-}),
 }

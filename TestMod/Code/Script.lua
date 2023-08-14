@@ -1,13 +1,5 @@
 
 
-if Zulib.setupModSlider then
-  Zulib.setupModSlider({
-    modId = CurrentModId,
-    optionId = 'myOptionId',
-    displayType = 'valueWithMax',
-    displayPostfix = '$',
-  })
-end
 
 
 

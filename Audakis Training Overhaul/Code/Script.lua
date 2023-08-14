@@ -1,19 +1,5 @@
-StatGainingPrerequisites.TrapDisarmExplosives.oncePerMapVisit = false
-StatGainingPrerequisites.TrapDisarmMechanical.oncePerMapVisit = false
-StatGainingPrerequisites.ResourceDiscovery.oncePerMapVisit = false
-StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 
-StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
-
-const.StatGaining.MilestoneAfterMax = 666
-const.StatGaining.BonusToRoll = 15
-
-
-
-
--- TODO: Set this to TRUE on release blyat
-local ttsjIsRelease = false
-
+-- find text element by ID
 function audaFindXtByTextId(obj, id)
   if obj.Text and TGetID(obj.Text) == id then
     return obj
@@ -26,7 +12,59 @@ function audaFindXtByTextId(obj, id)
   end
 end
 
+
+-- Setup training actions
+StatGainingPrerequisites.TrapDisarmExplosives.oncePerMapVisit = false
+StatGainingPrerequisites.TrapDisarmMechanical.oncePerMapVisit = false
+StatGainingPrerequisites.ResourceDiscovery.oncePerMapVisit = false
+StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
+StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
+
+
+AudaAto = AudaAto or {
+  -- TODO: Set this to TRUE on release
+  isRelease = false,
+
+  -- 12 hours
+  tickLength = 12 * 60 * 60,
+
+  statNames = {
+    'Health', 'Agility', 'Dexterity', 'Strength', 'Wisdom',
+    'Leadership', 'Marksmanship', 'Mechanical', 'Explosives', 'Medical',
+  },
+
+  wisdomDependentStatNames = {
+    'Leadership', 'Marksmanship', 'Mechanical', 'Explosives', 'Medical',
+  },
+  
+  randCd = function(self, stat, minTicks, maxTicks)
+    minTicks = minTicks or 15
+    maxTicks = maxTicks or 30
+    local cd = InteractionRandRange(minTicks * self.tickLength, maxTicks * self.tickLength, "StatCooldown")
+    local cdMod = MulDivRound(Clamp(stat, 40, 97), 175, 100)
+    cd = MulDivRound(cd, cdMod, 100)
+    return cd
+  end,
+
+  randomCooldownsToUnit = function(self, unit_data)
+    local sgData = GetMercStateFlag(unit_data.session_id, "StatGaining") or {}
+    if not sgData.Cooldowns then
+      sgData.Cooldowns = {}
+    end
+
+    for _, statName in ipairs(self.statNames) do
+      sgData.Cooldowns[statName] = Game.CampaignTime + self:randCd(unit_data[statName] or 60, 5)
+    end
+
+    SetMercStateFlag(unit_data.session_id, "StatGaining", sgData)
+  end,
+}
+
+
 function RollForStatGaining(unit, stat, failChance)
+  if unit[stat] <= 0 or unit[stat] >= 100 then
+    return
+  end
 
   local statAbbr = ''
   if stat == 'Health' then
@@ -53,68 +91,85 @@ function RollForStatGaining(unit, stat, failChance)
 
   local statBefore = unit[stat]
 
-  local statGaining = GetMercStateFlag(unit.session_id, "StatGaining") or {}
-  local cooldowns = statGaining.Cooldowns or {}
+  local sgData = GetMercStateFlag(unit.session_id, "StatGaining") or {}
   local prefix = 'FAIL'
   local reason_text = ""
+  sgData.Cooldowns = sgData.Cooldowns or {}
+  local cooldowns = sgData.Cooldowns
+
   local extraFailRoll = InteractionRand(100, "StatGaining")
-  if not failChance or failChance <= extraFailRoll then
-    if not cooldowns[stat] or cooldowns[stat] <= Game.CampaignTime then
-      if 0 < unit[stat] and unit[stat] < 100 then
-
-        local bonusToRoll = 6
-
-        if stat == 'Health' then
-          bonusToRoll = bonusToRoll + 3
-        elseif stat == 'Agility' then
-          bonusToRoll = bonusToRoll
-        elseif stat == 'Dexterity' then
-          bonusToRoll = bonusToRoll + 3
-        elseif stat == 'Strength' then
-          bonusToRoll = bonusToRoll + 5
-        elseif stat == 'Wisdom' then
-          bonusToRoll = bonusToRoll + 2
-        elseif stat == 'Leadership' then
-          bonusToRoll = bonusToRoll + 18
-        elseif stat == 'Marksmanship' then
-          bonusToRoll = bonusToRoll + 22
-        elseif stat == 'Mechanical' then
-          bonusToRoll = bonusToRoll + 12
-        elseif stat == 'Explosives' then
-          bonusToRoll = bonusToRoll + 12
-        elseif stat == 'Medical' then
-          bonusToRoll = bonusToRoll + 12
-        end
-
-        local thresholdBase = unit[stat]
-        local thresholdAdd = floatfloor((100 - unit[stat]) / 2)
-        local threshold = thresholdBase + thresholdAdd - bonusToRoll
-        local roll = InteractionRand(100, "StatGaining")
-        --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
-        reason_text = T({ 'CtR: <chance>%', chance = 99 - threshold })
-        if threshold < roll then
-          GainStat(unit, stat)
-          local cd = InteractionRandRange(216000, 648000, "StatCooldown")
-          cooldowns[stat] = Game.CampaignTime + cd
-          statGaining.Cooldowns = cooldowns
-          prefix = 'WIN'
-        else
-          prefix = 'MISS'
-        end
-      else
-        prefix = 'LIMIT'
-        reason_text = 'too high'
-      end
-    else
-      prefix = 'CD'
-      reason_text = 'roll cooldown'
-    end
-  else
+  if failChance and extraFailRoll < failChance then
     reason_text = 'CtF: ' .. failChance .. '%'
+    goto statGainNope
   end
 
+  if cooldowns[stat] and cooldowns[stat] > Game.CampaignTime then
+    prefix = 'CD'
+    reason_text = 'roll CD'
+
+    if cooldowns[stat] then
+      cooldowns[stat] = Max(cooldowns[stat] - AudaAto.tickLength, Game.CampaignTime)
+    end
+
+    goto statGainNope
+  end
+
+
+  if true then
+
+    local bonusToRoll = 4
+    
+    -- 0 to 4
+    local wisdomBonus = (Clamp(unit.Wisdom, 40, 100) - 40) / 15
+    local thresholdDiffDiv = 180
+
+    if stat == 'Health' then
+      bonusToRoll = bonusToRoll + 3
+    elseif stat == 'Agility' then
+      bonusToRoll = bonusToRoll
+    elseif stat == 'Dexterity' then
+      bonusToRoll = bonusToRoll + 3
+    elseif stat == 'Strength' then
+      bonusToRoll = bonusToRoll + 5
+    elseif stat == 'Wisdom' then
+      bonusToRoll = bonusToRoll
+      thresholdDiffDiv = 155
+    elseif stat == 'Leadership' then
+      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      thresholdDiffDiv = 400 + wisdomBonus * 50
+    elseif stat == 'Marksmanship' then
+      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      thresholdDiffDiv = 400 + wisdomBonus * 50
+    elseif stat == 'Mechanical' then
+      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      thresholdDiffDiv = 250 + wisdomBonus * 25
+    elseif stat == 'Explosives' then
+      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      thresholdDiffDiv = 250 + wisdomBonus * 25
+    elseif stat == 'Medical' then
+      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      thresholdDiffDiv = 250 + wisdomBonus * 25
+    end
+
+    local thresholdBase = Clamp(unit[stat], 70, 99)
+    local thresholdAdd = MulDivRound(99 - thresholdBase, 100, thresholdDiffDiv)
+    local threshold = thresholdBase + thresholdAdd - bonusToRoll
+    local roll = InteractionRand(100, "StatGaining")
+    --reason_text = 'Need: ' .. threshold .. ' (' .. thresholdBase .. '+' .. thresholdAdd .. '-' .. bonusToRoll .. '), Chance: ' .. (100 - threshold) .. '%, Roll: ' .. roll
+    reason_text = T({ 'CtR: <chance>%', chance = 99 - threshold })
+    if roll >= threshold then
+      GainStat(unit, stat)
+      cooldowns[stat] = Game.CampaignTime + AudaAto:randCd(statBefore)
+      prefix = 'WIN'
+    else
+      prefix = 'MISS'
+    end
+  end
+
+  ::statGainNope::
+
   if statBefore <= 99 then
-    CombatLog(ttsjIsRelease and "debug" or "important", T({
+    CombatLog(AudaAto.isRelease and "debug" or "important", T({
       'SG:<prefix> <nick> <statAbbr>(<statBefore>) <reason>',
       prefix = prefix,
       nick = unit.Nick or 'Merc',
@@ -124,18 +179,19 @@ function RollForStatGaining(unit, stat, failChance)
     }))
   end
 
-  SetMercStateFlag(unit.session_id, "StatGaining", statGaining)
+  SetMercStateFlag(unit.session_id, "StatGaining", sgData)
 end
 
-function ReceiveStatGainingPoints(unit, xpGain)
 
+
+function ReceiveStatGainingPoints(unit, xpGain)
   if HasPerk(unit, "OldDog") then
     return
   end
 
   local calcXpThresholds = function(level)
     local out = {}
-    local pointsForLevel = 1 + (Clamp(level, 1, 9) / 2)
+    local pointsForLevel = floatfloor(2 + Clamp(level - 1, 0, 8) / 2)
     local interval = 1000 / pointsForLevel
     for i = 1, pointsForLevel - 1 do
       out[#out + 1] = (out[#out] or 0) + interval
@@ -155,48 +211,46 @@ function ReceiveStatGainingPoints(unit, xpGain)
     local sgData = GetMercStateFlag(unit.session_id, "StatGaining")
     if sgData and sgData.Cooldowns then
       for _, key in ipairs(table.keys(sgData.Cooldowns)) do
-        sgData.Cooldowns[key] = Max(sgData.Cooldowns[key] - 43200, Game.CampaignTime - 1)
+        sgData.Cooldowns[key] = Max(sgData.Cooldowns[key] - AudaAto.tickLength, Game.CampaignTime)
       end
       SetMercStateFlag(unit.session_id, "StatGaining", sgData)
     end
 
-    local sgeIncrease = 2 * wis + 100
+    local sgeIncrease = 100 + MulDivRound(wis, 150, 100)
     if sgp <= 4 then
-      local minBoost = sgeIncrease
-      local maxBoost = 4 * minBoost
+      local minBoost = MulDivRound(sgeIncrease, 200, 100)
+      local maxBoost = MulDivRound(sgeIncrease, 250, 100)
       local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
       if sgp == 1 then
-        sgeBoost = MulDivRound(sgeBoost, 90, 100)
-      elseif sgp == 2 then
         sgeBoost = MulDivRound(sgeBoost, 80, 100)
-      elseif sgp == 3 then
-        sgeBoost = MulDivRound(sgeBoost, 70, 100)
-      elseif sgp == 4 then
+      elseif sgp == 2 then
         sgeBoost = MulDivRound(sgeBoost, 60, 100)
+      elseif sgp == 3 then
+        sgeBoost = MulDivRound(sgeBoost, 40, 100)
+      elseif sgp == 4 then
+        sgeBoost = MulDivRound(sgeBoost, 20, 100)
       end
       sgeIncrease = sgeIncrease + sgeBoost
-    elseif sgp <= 10 then
+    elseif sgp <= 9 then
       -- base
-    elseif sgp <= 12 then
+    elseif sgp <= 13 then
       sgeIncrease = MulDivRound(sgeIncrease, 90, 100)
-    elseif sgp <= 14 then
+    elseif sgp <= 17 then
       sgeIncrease = MulDivRound(sgeIncrease, 80, 100)
-    elseif sgp <= 16 then
+    elseif sgp <= 20 then
       sgeIncrease = MulDivRound(sgeIncrease, 60, 100)
-    elseif sgp <= 18 then
+    elseif sgp <= 22 then
       sgeIncrease = MulDivRound(sgeIncrease, 40, 100)
     else
       sgeIncrease = MulDivRound(sgeIncrease, 20, 100)
     end
 
-    --sgeIncrease = MulDivRound(tonumber(CurrentModOptions['ttsj'] or '100'))
-
-    --CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick or 'Merc', sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
+    --CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick or 'Merc', sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
     unit.statGainingPointsExtra = floatfloor((unit.statGainingPointsExtra or 0) + sgeIncrease + 0.5)
   end
 
   while unit.statGainingPointsExtra >= 10000 do
-    CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Boost (sge)", nick = unit.Nick or 'Merc' })
+    CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (sge)", nick = unit.Nick or 'Merc' })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
@@ -212,7 +266,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
     end
     for i = 1, #xpThresholds do
       if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Boost (threshold)", nick = unit.Nick or 'Merc' })
+        CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (threshold)", nick = unit.Nick or 'Merc' })
         pointsToGain = pointsToGain + 1
       end
     end
@@ -233,7 +287,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       xp = xp + tempXp
       xpGain = xpGain - tempXp
       if xpToMilestone <= tempXp then
-        CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> +1 Train Boost (milestone)", nick = unit.Nick or 'Merc' })
+        CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (milestone)", nick = unit.Nick or 'Merc' })
         pointsToGain = pointsToGain + 1
         xpSinceLastMilestone = 0
         milestone = milestone + increment
@@ -242,37 +296,34 @@ function ReceiveStatGainingPoints(unit, xpGain)
   end
 
   --if pointsToGain >= 1 then
-  --  CombatLog(ttsjIsRelease and "debug" or "important", T { "<nick> gaining <points> Train Points", nick = unit.Nick or 'Merc', points = pointsToGain })
+  --  CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> gaining <points> Train Points", nick = unit.Nick or 'Merc', points = pointsToGain })
   --end
   unit.statGainingPoints = unit.statGainingPoints + pointsToGain
 end
 
+
+
+-- Add random cooldowns on merc hire
 function OnMsg.MercHireStatusChanged(unit_data, previousState, newState)
   if newState == "Hired" and previousState ~= newState then
 
-    local sgData = GetMercStateFlag(unit_data.session_id, "StatGaining") or {}
-    if not sgData.Cooldowns then
-      sgData.Cooldowns = {}
-    end
+    AudaAto:randomCooldownsToUnit(unit_data)
 
-    for _, stat in ipairs({
-      'Health', 'Agility', 'Dexterity', 'Strength', 'Wisdom',
-      'Leadership', 'Marksmanship', 'Mechanical', 'Explosives', 'Medical',
-    }) do
-      sgData.Cooldowns[stat] = Game.CampaignTime + InteractionRandRange(0, 432000, "StatCooldown")
+    if unit_data.statGainingPointsExtra == 0 then
+      unit_data.statGainingPointsExtra = InteractionRandRange(1, 4242, 'StatGainingExtra')
     end
-
-    SetMercStateFlag(unit_data.session_id, "StatGaining", sgData)
 
   end
 end
+
+
 
 for _, param in ipairs(SectorOperations.TrainMercs.Parameters) do
   if param.Name == 'ActivityDurationInHoursFull' then
-    param.Value = 12
+    param.Value = 24
   end
 end
-g_PresetParamCache[SectorOperations.TrainMercs]['ActivityDurationInHoursFull'] = 12
+g_PresetParamCache[SectorOperations.TrainMercs]['ActivityDurationInHoursFull'] = 24
 
 
 SectorOperations.TrainMercs.ProgressPerTick = function (self, merc, prediction)
@@ -302,9 +353,7 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
     local students = GetOperationProfessionals(sector.Id, self.id, "Student")
     local t_stat = merc[stat]
     for _, student in ipairs(students) do
-      -- mod start
-      local is_learned_max = student[stat] >= t_stat or student[stat] >= 85
-      -- mod end
+      local is_learned_max = student[stat] >= t_stat or student[stat] >= 80
       if not is_learned_max then
         student.stat_learning = student.stat_learning or {}
 
@@ -315,38 +364,32 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
         end
 
 
-        -- mod start
         if #students >= 2 then
-          progressPerTick = MulDivRound(progressPerTick, 100, 100 + 50 * (#students - 1))
+          progressPerTick = MulDivRound(progressPerTick, 100, 100 + 15 * (#students - 1))
         end
 
         if student.statGainingPoints == 0 then
-          progressPerTick = MulDivRound(progressPerTick, 100, 500)
+          progressPerTick = MulDivRound(progressPerTick, 100, 1000)
         else
-          progressPerTick = MulDivRound(progressPerTick, 500, 100)
+          progressPerTick = MulDivRound(progressPerTick, 1000, 100)
         end
 
         -- Ensure minimum progress
         progressPerTick = Max(5, progressPerTick)
-        -- mod end
 
         student.stat_learning[stat] = student.stat_learning[stat] or { progress = 0, up_levels = 0 }
         local learning_progress = student.stat_learning[stat].progress
         learning_progress = learning_progress + progressPerTick
 
-        local progress_threshold = self:ResolveValue("learning_speed") * student[stat] * (100 + self:ResolveValue("wisdow_weight") - Max(0, (student.Wisdom - 50) * 2)) / 100
+        local progress_threshold = self:ResolveValue("learning_speed") * student[stat] * (100 + self:ResolveValue("wisdow_weight") - Max(42, (student.Wisdom - 50) * 2)) / 100
 
-        -- mod start
         if student[stat] >= 65 then
-          progress_threshold = MulDivRound(progress_threshold, 100 + 10 * (student[stat] - 64), 100)
+          progress_threshold = MulDivRound(progress_threshold, 100 + 5 * (student[stat] - 64), 100)
         end
-        -- mod end
 
         if learning_progress >= progress_threshold then
 
-          -- mod start
           student.statGainingPoints = Max(0, student.statGainingPoints - 1)
-          -- mod end
 
           local gainAmount = 1
           local modId = string.format("StatTraining-%s-%s-%d", stat, student.session_id, GetPreciseTicks())
@@ -391,12 +434,13 @@ if mercRolloverAttrsXt then
     local sgp = context.statGainingPoints or 0
     local postfix = ''
     if sgp <= 4 then
-      postfix = '  <style InventoryRolloverPropSmall><color PDASectorInfo_Yellow><alpha ' .. (25 * (5 - sgp))
-      postfix = postfix .. '>(faster gain)</alpha></color></style>'
+      postfix = '<scale 400><color PDASectorInfo_Yellow><alpha ' .. 90 + (20 * (4 - sgp))
+      postfix = postfix .. '><valign top 8> increased gain</alpha></color>'
     end
     self:SetText(T(488971610056, "ATTRIBUTES") ..
-        T({ ' | <style CrosshairAPTotal>TRAIN BOOSTS <sgp></style><postfix>',
-            sgp = sgp,
+        T({ ' | <scale 850><style CrosshairAPTotal><sgp> TRAIN BOOST<plural></style><postfix>',
+            sgp = sgp and ('+' .. sgp) or 'NO',
+            plural = sgp == 1 and '' or 'S',
             postfix = postfix }))
     return XContextControl.OnContextUpdate(self, context)
   end
