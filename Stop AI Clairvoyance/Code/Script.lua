@@ -9,7 +9,7 @@ end
 -- Uninstall Routine
 function OnMsg.ReloadLua()
   local isBeingDisabled = not table.find(ModsLoaded, 'id', CurrentModId)
-  if isBeingDisabled then
+  if isBeingDisabled and audaOrigAIUpdateScoutLocation then
     AIUpdateScoutLocation = audaOrigAIUpdateScoutLocation
   end
 end
