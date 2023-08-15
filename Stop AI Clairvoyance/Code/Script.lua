@@ -1,4 +1,21 @@
 
+
+
+-- Uninstall Routine Prerequisite
+if not audaOrigAIUpdateScoutLocation then
+  audaOrigAIUpdateScoutLocation = AIUpdateScoutLocation
+end
+
+-- Uninstall Routine
+function OnMsg.ReloadLua()
+  local isBeingDisabled = not table.find(ModsLoaded, 'id', CurrentModId)
+  if isBeingDisabled then
+    AIUpdateScoutLocation = audaOrigAIUpdateScoutLocation
+  end
+end
+
+
+
 local function findClosestEnemyForUnit(selfUnit, pos)
   if not IsValid(selfUnit) then
     return
