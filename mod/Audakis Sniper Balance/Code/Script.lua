@@ -2,10 +2,12 @@
 
 local cthPresets = Presets.ChanceToHitModifier.Default
 
+-- Remove preset on 2nd load (like when saving the mod in mod editor or when another mod is enabled by player)
 if cthPresets.ASniperRifleShot then
   cthPresets.ASniperRifleShot:Done()
 end
 
+-- So we can add preset here with current code
 PlaceObj('ChanceToHitModifier', {
   CalcValue = function (self, attacker, target, body_part_def, action, weapon1, weapon2, lof, aim, opportunity_attack, attacker_pos, target_pos)
     local mod = 0
@@ -32,9 +34,11 @@ PlaceObj('ChanceToHitModifier', {
   id = "ASniperRifleShot",
 })
 
+-- Sort Presets by their IDs, which fails when saving mod in mod editor
 cthPresets.ASniperRifleShot:SortPresets()
 
 
+-- Uninstall Routine
 function OnMsg.ReloadLua()
   local isBeingDisabled = not table.find(ModsLoaded, 'id', CurrentModId)
   if isBeingDisabled then
