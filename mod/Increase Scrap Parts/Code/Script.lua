@@ -2,7 +2,7 @@
 
 local auda_increaseScrapParts_modifier = tonumber(string.sub(CurrentModOptions['auda_increaseScrapParts_modifier'], 1, -2))
 
-function OnMsg.OptionsApply()
+function OnMsg.ApplyModOptions()
   auda_increaseScrapParts_modifier = tonumber(string.sub(CurrentModOptions['auda_increaseScrapParts_modifier'], 1, -2))
 end
 
