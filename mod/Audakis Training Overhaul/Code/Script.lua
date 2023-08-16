@@ -23,10 +23,24 @@ StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
 AudaAto = AudaAto or {
   -- TODO: Set this to TRUE on release
-  isRelease = false,
+  isRelease = true,
 
   -- 12 hours
   tickLength = 12 * 60 * 60,
+
+  -- sge = Stat Gaining (Points) Extra
+  -- sgeGainMod = "Train Boost Gain Modifier"
+  sgeGainMod = 50,
+
+  sectorTrainingStatCap = 80,
+
+  applyOptions = function(self)
+    local s = CurrentModOptions.audaAtoSgeGainMod or '100%'
+    self.sgeGainMod = tonumber(string.sub(s, 1, (string.find(s, '%%') - 1)))
+
+    s = CurrentModOptions.audaAtoSectorTrainStatCap or '80'
+    self.sectorTrainingStatCap = tonumber(string.sub(s, 1, 3))
+  end,
 
   statNames = {
     'Health', 'Agility', 'Dexterity', 'Strength', 'Wisdom',
@@ -59,6 +73,14 @@ AudaAto = AudaAto or {
     SetMercStateFlag(unit_data.session_id, "StatGaining", sgData)
   end,
 }
+
+function OnMsg.ModsReloaded()
+  AudaAto:applyOptions()
+end
+
+function OnMsg.ApplyModOptions()
+  AudaAto:applyOptions()
+end
 
 
 function RollForStatGaining(unit, stat, failChance)
@@ -119,8 +141,8 @@ function RollForStatGaining(unit, stat, failChance)
 
     local bonusToRoll = 4
     
-    -- 0 to 4
-    local wisdomBonus = (Clamp(unit.Wisdom, 40, 100) - 40) / 15
+    -- 0 to 3
+    local wisdomBonus = (Clamp(unit.Wisdom, 55, 100) - 55) / 15
     local thresholdDiffDiv = 180
 
     if stat == 'Health' then
@@ -135,19 +157,19 @@ function RollForStatGaining(unit, stat, failChance)
       bonusToRoll = bonusToRoll
       thresholdDiffDiv = 155
     elseif stat == 'Leadership' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      bonusToRoll = bonusToRoll + wisdomBonus + 3
       thresholdDiffDiv = 400 + wisdomBonus * 50
     elseif stat == 'Marksmanship' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      bonusToRoll = bonusToRoll + wisdomBonus + 3
       thresholdDiffDiv = 400 + wisdomBonus * 50
     elseif stat == 'Mechanical' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      bonusToRoll = bonusToRoll + wisdomBonus + 3
       thresholdDiffDiv = 250 + wisdomBonus * 25
     elseif stat == 'Explosives' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      bonusToRoll = bonusToRoll + wisdomBonus + 3
       thresholdDiffDiv = 250 + wisdomBonus * 25
     elseif stat == 'Medical' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 2
+      bonusToRoll = bonusToRoll + wisdomBonus + 3
       thresholdDiffDiv = 250 + wisdomBonus * 25
     end
 
@@ -189,19 +211,19 @@ function ReceiveStatGainingPoints(unit, xpGain)
     return
   end
 
-  local calcXpThresholds = function(level)
-    local out = {}
-    local pointsForLevel = floatfloor(1 + Clamp(level - 1, 0, 8) / 2)
-    local interval = 1000 / pointsForLevel
-    for i = 1, pointsForLevel - 1 do
-      out[#out + 1] = (out[#out] or 0) + interval
-    end
-    out[#out + 1] = 1000
-    return out
-  end
+  --local calcXpThresholds = function(level)
+  --  local out = {}
+  --  local pointsForLevel = floatfloor(1 + Clamp(level - 1, 0, 8) / 2)
+  --  local interval = 1000 / pointsForLevel
+  --  for i = 1, pointsForLevel - 1 do
+  --    out[#out + 1] = (out[#out] or 0) + interval
+  --  end
+  --  out[#out + 1] = 1000
+  --  return out
+  --end
 
-  local xp = unit.Experience or 0
-  local xpPercent, level = CalcXpPercentAndLevel(xp)
+  --local xp = unit.Experience or 0
+  --local xpPercent, level = CalcXpPercentAndLevel(xp)
   local pointsToGain = 0
   local sgp = unit.statGainingPoints or 0
   local wis = unit.Wisdom or 50
@@ -216,10 +238,11 @@ function ReceiveStatGainingPoints(unit, xpGain)
       SetMercStateFlag(unit.session_id, "StatGaining", sgData)
     end
 
-    local sgeIncrease = 100 + MulDivRound(wis, 75, 100)
+    local sgeIncrease = 200 + MulDivRound(wis, 100, 100)
+    sgeIncrease = MulDivRound(sgeIncrease, AudaAto.sgeGainMod, 100)
     if sgp <= 4 then
-      local minBoost = MulDivRound(sgeIncrease, 75, 100)
-      local maxBoost = MulDivRound(sgeIncrease, 125, 100)
+      local minBoost = MulDivRound(sgeIncrease, 25, 100)
+      local maxBoost = MulDivRound(sgeIncrease, 50, 100)
       local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
       if sgp == 1 then
         sgeBoost = MulDivRound(sgeBoost, 80, 100)
@@ -255,49 +278,50 @@ function ReceiveStatGainingPoints(unit, xpGain)
     pointsToGain = pointsToGain + 1
   end
 
-  while level < #XPTable and 0 < xpGain do
-    local xpThresholds = calcXpThresholds(level)
-    local tempXp = Min(xpGain, XPTable[level + 1] - XPTable[level])
-    xp = xp + tempXp
-    xpGain = xpGain - tempXp
-    local newXpPercent, newLevel = CalcXpPercentAndLevel(xp)
-    if level < newLevel then
-      newXpPercent = 1000
-    end
-    for i = 1, #xpThresholds do
-      if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-        CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (threshold)", nick = unit.Nick or 'Merc' })
-        pointsToGain = pointsToGain + 1
-      end
-    end
-    level = newLevel
-    xpPercent = 0
-  end
-  if level == #XPTable and 0 < xpGain then
-    local xpSinceLastMilestone = xp - XPTable[#XPTable]
-    local milestone = const.StatGaining.MilestoneAfterMax
-    local increment = const.StatGaining.MilestoneAfterMaxIncrement
-    while xpSinceLastMilestone >= milestone do
-      xpSinceLastMilestone = xpSinceLastMilestone - milestone
-      milestone = milestone + increment
-    end
-    while 0 < xpGain do
-      local xpToMilestone = milestone - xpSinceLastMilestone
-      local tempXp = Min(xpGain, xpToMilestone)
-      xp = xp + tempXp
-      xpGain = xpGain - tempXp
-      if xpToMilestone <= tempXp then
-        CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (milestone)", nick = unit.Nick or 'Merc' })
-        pointsToGain = pointsToGain + 1
-        xpSinceLastMilestone = 0
-        milestone = milestone + increment
-      end
-    end
-  end
-
+  --while level < #XPTable and 0 < xpGain do
+  --  local xpThresholds = calcXpThresholds(level)
+  --  local tempXp = Min(xpGain, XPTable[level + 1] - XPTable[level])
+  --  xp = xp + tempXp
+  --  xpGain = xpGain - tempXp
+  --  local newXpPercent, newLevel = CalcXpPercentAndLevel(xp)
+  --  if level < newLevel then
+  --    newXpPercent = 1000
+  --  end
+  --  for i = 1, #xpThresholds do
+  --    if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
+  --      CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (threshold)", nick = unit.Nick or 'Merc' })
+  --      pointsToGain = pointsToGain + 1
+  --    end
+  --  end
+  --  level = newLevel
+  --  xpPercent = 0
+  --end
+  --if level == #XPTable and 0 < xpGain then
+  --  local xpSinceLastMilestone = xp - XPTable[#XPTable]
+  --  local milestone = const.StatGaining.MilestoneAfterMax
+  --  local increment = const.StatGaining.MilestoneAfterMaxIncrement
+  --  while xpSinceLastMilestone >= milestone do
+  --    xpSinceLastMilestone = xpSinceLastMilestone - milestone
+  --    milestone = milestone + increment
+  --  end
+  --  while 0 < xpGain do
+  --    local xpToMilestone = milestone - xpSinceLastMilestone
+  --    local tempXp = Min(xpGain, xpToMilestone)
+  --    xp = xp + tempXp
+  --    xpGain = xpGain - tempXp
+  --    if xpToMilestone <= tempXp then
+  --      CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (milestone)", nick = unit.Nick or 'Merc' })
+  --      pointsToGain = pointsToGain + 1
+  --      xpSinceLastMilestone = 0
+  --      milestone = milestone + increment
+  --    end
+  --  end
+  --end
+  --
   --if pointsToGain >= 1 then
   --  CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> gaining <points> Train Points", nick = unit.Nick or 'Merc', points = pointsToGain })
   --end
+
   unit.statGainingPoints = unit.statGainingPoints + pointsToGain
 end
 
@@ -353,7 +377,7 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
     local students = GetOperationProfessionals(sector.Id, self.id, "Student")
     local t_stat = merc[stat]
     for _, student in ipairs(students) do
-      local is_learned_max = student[stat] >= t_stat or student[stat] >= 80
+      local is_learned_max = student[stat] >= t_stat or student[stat] >= AudaAto.sectorTrainingStatCap
       if not is_learned_max then
         student.stat_learning = student.stat_learning or {}
 
@@ -381,10 +405,10 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
         local learning_progress = student.stat_learning[stat].progress
         learning_progress = learning_progress + progressPerTick
 
-        local progress_threshold = self:ResolveValue("learning_speed") * student[stat] * (100 + self:ResolveValue("wisdow_weight") - Max(42, (student.Wisdom - 50) * 2)) / 100
+        local progress_threshold = 250 * student[stat] * (150 - Max(80, (student.Wisdom - 50) * 2)) / 100
 
-        if student[stat] >= 65 then
-          progress_threshold = MulDivRound(progress_threshold, 100 + 5 * (student[stat] - 64), 100)
+        if student[stat] >= (AudaAto.sectorTrainingStatCap - 20) then
+          progress_threshold = MulDivRound(progress_threshold, 100 + 5 * (student[stat] - (AudaAto.sectorTrainingStatCap - 21)), 100)
         end
 
         if learning_progress >= progress_threshold then
