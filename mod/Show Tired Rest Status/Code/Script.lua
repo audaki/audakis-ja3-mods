@@ -52,8 +52,11 @@ local removeTiredXtFn = function()
 end
 
 if mercRolloverXt then
+
+  -- Always remove element first if it was added in a previous cycle
   removeTiredXtFn()
 
+  -- Fix margins of sibling element due to FoldWhenHidden
   mercRolloverEnergyXt.Margins = box(0, 0, 0, 2)
 
   tiredXt = PlaceObj("XTemplateWindow", {
@@ -135,6 +138,7 @@ end
 function OnMsg.ReloadLua()
   local isBeingDisabled = not table.find(ModsLoaded, 'id', CurrentModId)
   if isBeingDisabled then
+    -- Remove UI change
     removeTiredXtFn()
   end
 end
