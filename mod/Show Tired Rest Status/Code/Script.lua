@@ -96,27 +96,40 @@ if mercRolloverXt then
         additional = -MulDivRound(const.Satellite.UnitTirednessTravelTime, percent, 100)
       end
 
-      local travelTime = MulDivRound(context.TravelTime, 1,  const.Scale.h)
-      local travelTimeMax = MulDivRound(const.Satellite.UnitTirednessTravelTime + additional, 1, const.Scale.h)
+      local travelTime = MulDivRound(context.TravelTime, 10,  const.Scale.h)
+      local travelTimeMax = MulDivRound(const.Satellite.UnitTirednessTravelTime + additional, 10, const.Scale.h)
       local travelTimeRemain = travelTimeMax - travelTime
 
-      local restTimer = MulDivRound(Game.CampaignTime - context.RestTimer, 1,  const.Scale.h)
-      local restTimerMax = MulDivRound(const.Satellite.UnitTirednessRestTime, 1,  const.Scale.h)
+      local restTimer = MulDivRound(Game.CampaignTime - context.RestTimer, 10,  const.Scale.h)
+      local restTimerMax = MulDivRound(const.Satellite.UnitTirednessRestTime, 10,  const.Scale.h)
       local restTimerRemain = restTimerMax - restTimer
 
-      local text = T{
-        '<style SatelliteContextMenuKeybind>Tired In<scale 690> (Travel)<scale 1000></style><right><style PDABrowserTextLightMedium><travelTimeRemain>h<scale 690> (<travelTime>h<scale 500> / <scale 690><travelTimeMax>h)<scale 1000></style><newline><left>',
-        travelTimeRemain = travelTimeRemain,
-        travelTime = travelTime,
-        travelTimeMax = travelTimeMax,
-      }
+      local text
+      if travelTimeRemain >= 0 then
+        text = text .. T{
+          '<style SatelliteContextMenuKeybind>Tired In<scale 690> (Travel)<scale 1000></style><right><style PDABrowserTextLightMedium><travelTimeRemain>h<scale 690> (<travelTime>h<scale 500> / <scale 690><travelTimeMax>h)<scale 1000></style><newline><left>',
+          travelTimeRemain = travelTimeRemain / 10.0,
+          travelTime = travelTime / 10,
+          travelTimeMax = travelTimeMax / 10,
+        }
+      else
+        text = text .. T{
+          '<style SatelliteContextMenuKeybind>Tired In<scale 690> (Travel)<scale 1000></style><right><style PDABrowserTextLightMedium><scale 690>+Tired Incoming<scale 1000></style><newline><left>',
+        }
+      end
 
-      text = text .. T{
-        '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><restTimerRemain>h<scale 690> (<restTimer>h<scale 500> / <scale 690><restTimerMax>h)<scale 1000></style><newline><left>',
-        restTimerRemain = restTimerRemain,
-        restTimer = restTimer,
-        restTimerMax = restTimerMax,
-      }
+      if restTimerRemain >= 0 then
+        text = text .. T{
+          '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><restTimerRemain>h<scale 690> (<restTimer>h<scale 500> / <scale 690><restTimerMax>h)<scale 1000></style><newline><left>',
+          restTimerRemain = restTimerRemain == 120 and 12 or (restTimerRemain / 10.0),
+          restTimer = restTimer / 10,
+          restTimerMax = restTimerMax / 10,
+        }
+      else
+        text = text .. T{
+          '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><scale 690>Not Resting Normally<scale 1000></style><newline><left>',
+        }
+      end
 
       self:SetVisible(true)
       self:SetText(text)
