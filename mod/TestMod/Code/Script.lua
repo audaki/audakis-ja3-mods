@@ -5,8 +5,6 @@
 
 
 
-
-
 --
 --
 --CombatActions.BurstFire.GetActionResults = function (self, unit, args)
