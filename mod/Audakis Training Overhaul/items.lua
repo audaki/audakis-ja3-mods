@@ -4,7 +4,8 @@ PlaceObj('ModItemCode', {
 }),
 PlaceObj('ModItemOptionChoice', {
 	'name', "audaAtoSectorTrainStatCap",
-	'DisplayName', "Sector Training Operation Stat Cap",
+	'DisplayName', "Sector Training Stat Cap",
+	'Help', "When using the <em>Sector Training Operation</em> this setting controls the highest stat you can train your mercs up to. This does not affect Field Experience.",
 	'DefaultValue', "80 (Hard, Default)",
 	'ChoiceList', {
 		"60 (Masochist)",
@@ -21,7 +22,7 @@ PlaceObj('ModItemOptionChoice', {
 PlaceObj('ModItemOptionChoice', {
 	'name', "audaAtoSgeGainMod",
 	'DisplayName', "TrainBoost GainSpeed",
-	'Help', "100% is default balancing<newline><newline>Less is harder<newline>More is easier<newline><newline>This setting is about extra Train Boosts you earn for combat and quest activity, you will still get some Train Boosts statically based on total XP earned",
+	'Help', "100% is default balancing<newline><newline>Less is harder<newline>More is easier<newline><newline>This setting controls how fast you earn Train Boosts for Activity (Combat, Quests)",
 	'DefaultValue', "50% (Hard, Default)",
 	'ChoiceList', {
 		"5% (Masochist)",

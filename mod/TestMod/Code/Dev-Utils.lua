@@ -1,6 +1,6 @@
 
 
-TextStyles.ConsoleLog.TextFont = 'droid, 9, bold'
+TextStyles.ConsoleLog.TextFont = 'droid, 8, bold'
 
 if not origConsolePrint then
   origConsolePrint = ConsolePrint
