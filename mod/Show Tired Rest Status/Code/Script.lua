@@ -171,12 +171,16 @@ if mercRolloverXt then
         }
       end
 
-      if restTimerRemain >= 0 then
+      if context.RestTimer > 0 and restTimerRemain >= 0 then
         text = text .. T{
           '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><restTimerRemain>h<scale 690> (<restTimer>h<scale 500> / <scale 690><restTimerMax>h)<scale 1000></style><newline><left>',
           restTimerRemain = restTimerRemain == 120 and 12 or (restTimerRemain / 10.0),
           restTimer = restTimer / 10,
           restTimerMax = restTimerMax / 10,
+        }
+      elseif context.RestTimer > 0 then
+        text = text .. T{
+          '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><scale 690>+Rest Incoming<scale 1000></style><newline><left>',
         }
       else
         text = text .. T{
