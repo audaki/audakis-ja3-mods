@@ -160,7 +160,7 @@ if mercRolloverXt then
       local text
       if travelTimeRemain >= 0 then
         text = text .. T{
-          '<style SatelliteContextMenuKeybind>Tired In<scale 690> (Travel)<scale 1000></style><right><style PDABrowserTextLightMedium><travelTimeRemain>h<scale 690> (<travelTime>h<scale 500> / <scale 690><travelTimeMax>h)<scale 1000></style><newline><left>',
+          '<style SatelliteContextMenuKeybind>Tired In<scale 690> (Travel)<scale 1000></style><right><style PDABrowserTextLightMedium><travelTimeRemain>h<scale 690> (Max: <travelTimeMax>h)<scale 1000></style><newline><left>',
           travelTimeRemain = travelTimeRemain / 10.0,
           travelTime = travelTime / 10,
           travelTimeMax = travelTimeMax / 10,
@@ -173,7 +173,7 @@ if mercRolloverXt then
 
       if context.RestTimer > 0 and restTimerRemain >= 0 then
         text = text .. T{
-          '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><restTimerRemain>h<scale 690> (<restTimer>h<scale 500> / <scale 690><restTimerMax>h)<scale 1000></style><newline><left>',
+          '<style SatelliteContextMenuKeybind>Rested In</style><right><style PDABrowserTextLightMedium><restTimerRemain>h<scale 690> (Max: <restTimerMax>h)<scale 1000></style><newline><left>',
           restTimerRemain = restTimerRemain == 120 and 12 or (restTimerRemain / 10.0),
           restTimer = restTimer / 10,
           restTimerMax = restTimerMax / 10,

@@ -125,7 +125,7 @@ function Unit:SuspiciousRoutine()
     self:Face(body, 500)
   end
   local anim = self:TryGetActionAnim("Suspicious", "Standing")
-  if anim then
+  if anim and self:GetStateText() ~= anim then
     self:SetState(anim)
   end
 
