@@ -211,19 +211,6 @@ function ReceiveStatGainingPoints(unit, xpGain)
     return
   end
 
-  --local calcXpThresholds = function(level)
-  --  local out = {}
-  --  local pointsForLevel = floatfloor(1 + Clamp(level - 1, 0, 8) / 2)
-  --  local interval = 1000 / pointsForLevel
-  --  for i = 1, pointsForLevel - 1 do
-  --    out[#out + 1] = (out[#out] or 0) + interval
-  --  end
-  --  out[#out + 1] = 1000
-  --  return out
-  --end
-
-  --local xp = unit.Experience or 0
-  --local xpPercent, level = CalcXpPercentAndLevel(xp)
   local pointsToGain = 0
   local sgp = unit.statGainingPoints or 0
   local wis = unit.Wisdom or 50
@@ -268,7 +255,6 @@ function ReceiveStatGainingPoints(unit, xpGain)
       sgeIncrease = MulDivRound(sgeIncrease, 20, 100)
     end
 
-    --CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick>.sge = <sge> + <sgeIncrease>", nick = unit.Nick or 'Merc', sge = unit.statGainingPointsExtra, sgeIncrease = sgeIncrease })
     unit.statGainingPointsExtra = floatfloor((unit.statGainingPointsExtra or 0) + sgeIncrease + 0.5)
   end
 
@@ -277,50 +263,6 @@ function ReceiveStatGainingPoints(unit, xpGain)
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
-
-  --while level < #XPTable and 0 < xpGain do
-  --  local xpThresholds = calcXpThresholds(level)
-  --  local tempXp = Min(xpGain, XPTable[level + 1] - XPTable[level])
-  --  xp = xp + tempXp
-  --  xpGain = xpGain - tempXp
-  --  local newXpPercent, newLevel = CalcXpPercentAndLevel(xp)
-  --  if level < newLevel then
-  --    newXpPercent = 1000
-  --  end
-  --  for i = 1, #xpThresholds do
-  --    if xpPercent < xpThresholds[i] and newXpPercent >= xpThresholds[i] then
-  --      CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (threshold)", nick = unit.Nick or 'Merc' })
-  --      pointsToGain = pointsToGain + 1
-  --    end
-  --  end
-  --  level = newLevel
-  --  xpPercent = 0
-  --end
-  --if level == #XPTable and 0 < xpGain then
-  --  local xpSinceLastMilestone = xp - XPTable[#XPTable]
-  --  local milestone = const.StatGaining.MilestoneAfterMax
-  --  local increment = const.StatGaining.MilestoneAfterMaxIncrement
-  --  while xpSinceLastMilestone >= milestone do
-  --    xpSinceLastMilestone = xpSinceLastMilestone - milestone
-  --    milestone = milestone + increment
-  --  end
-  --  while 0 < xpGain do
-  --    local xpToMilestone = milestone - xpSinceLastMilestone
-  --    local tempXp = Min(xpGain, xpToMilestone)
-  --    xp = xp + tempXp
-  --    xpGain = xpGain - tempXp
-  --    if xpToMilestone <= tempXp then
-  --      CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (milestone)", nick = unit.Nick or 'Merc' })
-  --      pointsToGain = pointsToGain + 1
-  --      xpSinceLastMilestone = 0
-  --      milestone = milestone + increment
-  --    end
-  --  end
-  --end
-  --
-  --if pointsToGain >= 1 then
-  --  CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> gaining <points> Train Points", nick = unit.Nick or 'Merc', points = pointsToGain })
-  --end
 
   unit.statGainingPoints = unit.statGainingPoints + pointsToGain
 end
