@@ -1,0 +1,20 @@
+return PlaceObj('ModDef', {
+	'title', "Configurable Travel Speed",
+	'description', 'Until 1.0.3 this mod fixed LDR to Travel Speed. Since Vanilla 1.1.0 changed this as well (to the former Hard Setting of this mod), this mod was changed to allow you to change the Travel Speed Curve to your desired rate.\n\nNow you can configure your Travel Speed.\n\nCompatible with JA3 Patch v1.1.0\n\nExample in Vanilla:\n 25 LDR → 12h\n 40 LDR → 10h 28m\n 57 LDR → 9h 06m\n 71 LDR → 8h 14m\n 91 LDR → 7h 14m\n100 LDR → 6h 42m\n\nExample with Mod in FAST MODE\n 25 LDR → 5h 28m\n 40 LDR → 4h 42m\n 57 LDR → 4h 04m\n 71 LDR → 3h 40m\n 91 LDR → 3h 12m\n100 LDR → 3h\n\nExample with Mod in BALANCED MODE\n 25 LDR → 6h 30m\n 40 LDR → 5h 42m\n 57 LDR → 5h 02m\n 71 LDR → 4h 34m\n 91 LDR → 4h 04m\n100 LDR → 3h 52m\n\nExample with Mod in NORMAL MODE (=default)\n 25 LDR → 8h\n 40 LDR → 7h 18m\n 57 LDR → 6h 36m\n 71 LDR → 6h 08m\n 91 LDR → 5h 34m\n100 LDR → 5h 20m\n\nExample with Mod in HARD MODE\n 25 LDR → 12h\n 40 LDR → 10h 28m\n 57 LDR → 9h 06m\n 71 LDR → 8h 14m\n 91 LDR → 7h 14m\n100 LDR → 6h 42m\n\nYou can select your prefered Travel Speed in "Options -> Mod Options"\n\nPS: Mod is safe to add and remove at any time!',
+	'image', "Mod/tKqxNSe/Images/configurable-travel-speed.png",
+	'last_changes', "Update for v1.1.0",
+	'id', "tKqxNSe",
+	'author', "Audaki_ra",
+	'version_major', 1,
+	'version_minor', 10,
+	'version', 102,
+	'lua_revision', 233360,
+	'saved_with_revision', 340147,
+	'code', {
+		"Code/Script.lua",
+	},
+	'has_options', true,
+	'saved', 1692642976,
+	'code_hash', -5415193793790846963,
+	'steam_id', "3010866837",
+})
