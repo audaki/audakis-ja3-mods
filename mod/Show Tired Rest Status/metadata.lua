@@ -7,13 +7,13 @@ return PlaceObj('ModDef', {
 	'author', "Audaki_ra",
 	'version_major', 1,
 	'version_minor', 10,
-	'version', 136,
+	'version', 137,
 	'lua_revision', 233360,
 	'saved_with_revision', 340147,
 	'code', {
 		"Code/Script.lua",
 	},
-	'saved', 1692660629,
-	'code_hash', -2254477339105379184,
+	'saved', 1692661349,
+	'code_hash', -6131174353361759416,
 	'steam_id', "3021381628",
 })

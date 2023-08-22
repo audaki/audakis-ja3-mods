@@ -23,7 +23,7 @@ StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
 AudaAto = AudaAto or {
   -- TODO: Set this to TRUE on release
-  isRelease = false,
+  isRelease = true,
 
   -- 12 hours
   tickLength = 12 * 60 * 60,

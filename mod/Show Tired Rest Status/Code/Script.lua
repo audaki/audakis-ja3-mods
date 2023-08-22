@@ -103,13 +103,13 @@ local removeTiredXtFn = function()
   end
 end
 
-if mercRolloverXt then
+if mercRolloverXt and mercRolloverEnergyXt then
 
   -- Always remove element first if it was added in a previous cycle
   removeTiredXtFn()
 
   -- Fix margins of sibling element due to FoldWhenHidden
-  mercRolloverEnergyXt.Margins = box(0, 0, 0, 2)
+  mercRolloverEnergyXt.Margins = box(0, 0, 0, 1)
 
   tiredXt = PlaceObj("XTemplateWindow", {
     "__class",

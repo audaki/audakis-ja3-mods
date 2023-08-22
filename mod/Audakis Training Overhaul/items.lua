@@ -22,7 +22,7 @@ PlaceObj('ModItemOptionChoice', {
 PlaceObj('ModItemOptionChoice', {
 	'name', "audaAtoSgeGainMod",
 	'DisplayName', "TrainBoost GainSpeed",
-	'Help', "100% is default balancing<newline><newline>Less is harder<newline>More is easier<newline><newline>This setting controls how fast you earn Train Boosts for Activity (Combat, Quests)",
+	'Help', "This setting controls how fast you can collect how many Train Boosts<newline><newline>50% is default balancing<newline><newline>Less is harder<newline>More is easier<newline><newline>This setting controls how fast you earn Train Boosts for Activity (Combat, Quests)",
 	'DefaultValue', "50% (Hard, Default)",
 	'ChoiceList', {
 		"5% (Masochist)",
