@@ -55,7 +55,7 @@ AudaAto = AudaAto or {
     minTicks = minTicks or 15
     maxTicks = maxTicks or 30
     local cd = InteractionRandRange(minTicks * self.tickLength, maxTicks * self.tickLength, "StatCooldown")
-    local cdMod = MulDivRound(Clamp(stat, 40, 97), 175, 100)
+    local cdMod = MulDivRound(Clamp(stat, 20, 97), 175, 100)
     cd = MulDivRound(cd, cdMod, 100)
     return cd
   end,
@@ -173,7 +173,7 @@ function RollForStatGaining(unit, stat, failChance)
       thresholdDiffDiv = 250 + wisdomBonus * 25
     end
 
-    local thresholdBase = Clamp(unit[stat], 70, 99)
+    local thresholdBase = Clamp(unit[stat], 60, 99)
     local thresholdAdd = MulDivRound(99 - thresholdBase, 100, thresholdDiffDiv)
     local threshold = thresholdBase + thresholdAdd - bonusToRoll
     local roll = InteractionRand(100, "StatGaining")
@@ -228,17 +228,17 @@ function ReceiveStatGainingPoints(unit, xpGain)
     local sgeIncrease = 200 + MulDivRound(wis, 100, 100)
     sgeIncrease = MulDivRound(sgeIncrease, AudaAto.sgeGainMod, 100)
     if sgp <= 4 then
-      local minBoost = MulDivRound(sgeIncrease, 25, 100)
+      local minBoost = MulDivRound(sgeIncrease, 40, 100)
       local maxBoost = MulDivRound(sgeIncrease, 50, 100)
       local sgeBoost = InteractionRandRange(minBoost, maxBoost, 'StatGainingExtra')
       if sgp == 1 then
-        sgeBoost = MulDivRound(sgeBoost, 80, 100)
+        sgeBoost = MulDivRound(sgeBoost, 90, 100)
       elseif sgp == 2 then
-        sgeBoost = MulDivRound(sgeBoost, 60, 100)
+        sgeBoost = MulDivRound(sgeBoost, 75, 100)
       elseif sgp == 3 then
-        sgeBoost = MulDivRound(sgeBoost, 40, 100)
+        sgeBoost = MulDivRound(sgeBoost, 55, 100)
       elseif sgp == 4 then
-        sgeBoost = MulDivRound(sgeBoost, 20, 100)
+        sgeBoost = MulDivRound(sgeBoost, 30, 100)
       end
       sgeIncrease = sgeIncrease + sgeBoost
     elseif sgp <= 9 then
