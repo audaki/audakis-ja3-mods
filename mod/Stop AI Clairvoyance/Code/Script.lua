@@ -50,7 +50,7 @@ function AIUpdateScoutLocation(unit)
 
   local px = unit.last_known_enemy_pos:x()
   local py = unit.last_known_enemy_pos:y()
-  local r = 5 * guim
+  local r = 6 * guim
 
   local sx1 = px - r
   local sx2 = px + r + 1
@@ -62,18 +62,18 @@ function AIUpdateScoutLocation(unit)
   if closestEnemy then
     local eneX, eneY, eneZ = closestEnemy:GetPosXYZ()
     if eneX < px then
-      sx1 = sx1 - 3 * guim
-      sx2 = sx2 - 3 * guim
+      sx1 = sx1 - 5 * guim
+      sx2 = sx2 - 5 * guim
     elseif eneX > px then
-      sx1 = sx1 + 3 * guim
-      sx2 = sx2 + 3 * guim
+      sx1 = sx1 + 5 * guim
+      sx2 = sx2 + 5 * guim
     end
     if eneY < py then
-      sy1 = sy1 - 3 * guim
-      sy2 = sy2 - 3 * guim
+      sy1 = sy1 - 5 * guim
+      sy2 = sy2 - 5 * guim
     elseif eneY > py then
-      sy1 = sy1 + 3 * guim
-      sy2 = sy2 + 3 * guim
+      sy1 = sy1 + 5 * guim
+      sy2 = sy2 + 5 * guim
     end
   end
 
