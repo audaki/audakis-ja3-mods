@@ -53,6 +53,29 @@ PlaceObj('ChanceToHitModifier', {
 cthPresets.ASniperRifleShot:SortPresets()
 
 
+
+
+CombatActions.DualShot.GetAPCost = function (self, unit, args)
+  local weapon1, weapon2 = self:GetAttackWeapons(unit, args)
+  if not weapon1 or not weapon2 then
+    return -1
+  end
+  local aim = args and args.aim or 0
+
+  local w1Attack = weapon1:GetBaseAttack(unit)
+  w1Attack = w1Attack and CombatActions[w1Attack]
+  local w2Attack = weapon2:GetBaseAttack(unit)
+  w2Attack = w2Attack and CombatActions[w2Attack]
+
+  local isSingleShot = w1Attack ~= w2Attack or w1Attack == CombatActions.SingleShot
+
+  if isSingleShot then
+    return Max(unit:GetAttackAPCost(self, weapon1, false, aim) + CombatActions.SingleShot.ActionPointDelta, unit:GetAttackAPCost(self, weapon2, false, aim) + CombatActions.SingleShot.ActionPointDelta) + self.ActionPointDelta
+  end
+  return Max(unit:GetAttackAPCost(self, weapon1, false, aim), unit:GetAttackAPCost(self, weapon2, false, aim)) + self.ActionPointDelta
+end
+
+
 -- Uninstall Routine
 function OnMsg.ReloadLua()
   local isBeingDisabled = not table.find(ModsLoaded, 'id', CurrentModId)
