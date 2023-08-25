@@ -1,5 +1,20 @@
 
 
+local setBurstDamagePenalty = function(value)
+  local action = CombatActions.BurstFire
+  local params = action.Parameters
+  local param = table.find_value(params, 'Name', 'dmg_penalty')
+  value = value or -40
+
+  param.Value = value
+
+  action:PostLoad()
+end
+
+setBurstDamagePenalty()
+
+
+
 local cthPresets = Presets.ChanceToHitModifier.Default
 
 -- Remove preset on 2nd load (like when saving the mod in mod editor or when another mod is enabled by player)
@@ -44,6 +59,7 @@ function OnMsg.ReloadLua()
   if isBeingDisabled then
     if cthPresets.ASniperRifleShot then
       cthPresets.ASniperRifleShot:Done()
+      setBurstDamagePenalty(-50)
     end
   end
 end
