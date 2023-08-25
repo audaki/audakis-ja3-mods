@@ -1,0 +1,22 @@
+return PlaceObj('ModDef', {
+	'title', "Audaki’s UI Enhancements",
+	'description', "[h1]Compatibility[/h1]\n[h2]JA3 1.1.x ✓Compatible[/h2]\n\n[h1]Audaki’s UI Enhancements[/h1]\n[h2]Merges (and replaces) the following previous mods[/h2]\n[list]\n  [*] Show XP and Level\n  [*] Show Free Move AP\n  [*] Show Tired / Rested Status\n  [*] Explain Morale Influences\n  [*] Colored Ammo in Weapon\n  [*] Option Sliders have Numbers\n  [*] Trap is Mechanical or Explosive?\n[/list]",
+	'last_changes', "Initial Release",
+	'id', "audaUi",
+	'author', "Audaki_ra",
+	'version_major', 1,
+	'version', 136,
+	'lua_revision', 233360,
+	'saved_with_revision', 340446,
+	'code', {
+		"Code/AudaXUtil.lua",
+		"Code/Script.lua",
+	},
+	'has_options', true,
+	'saved', 1692982657,
+	'code_hash', -9165219203973025424,
+	'TagGameSettings', true,
+	'TagOther', true,
+	'TagUI', true,
+	'TagWeapons&Items', true,
+})

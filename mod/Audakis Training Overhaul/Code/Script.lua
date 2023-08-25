@@ -21,9 +21,8 @@ StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
 StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
 
 
-AudaAto = AudaAto or {
-  -- TODO: Set this to TRUE on release
-  isRelease = true,
+AudaAto = {
+  isKira = table.find(ModsLoaded, 'id', 'audaTest'),
 
   -- 12 hours
   tickLength = 12 * 60 * 60,
@@ -35,7 +34,7 @@ AudaAto = AudaAto or {
   sectorTrainingStatCap = 80,
 
   applyOptions = function(self)
-    local s = CurrentModOptions.audaAtoSgeGainMod or '100%'
+    local s = CurrentModOptions.audaAtoSgeGainMod or '50%'
     self.sgeGainMod = tonumber(string.sub(s, 1, (string.find(s, '%%') - 1)))
 
     s = CurrentModOptions.audaAtoSectorTrainStatCap or '80'
@@ -50,7 +49,7 @@ AudaAto = AudaAto or {
   wisdomDependentStatNames = {
     'Leadership', 'Marksmanship', 'Mechanical', 'Explosives', 'Medical',
   },
-  
+
   randCd = function(self, stat, minTicks, maxTicks)
     minTicks = minTicks or 15
     maxTicks = maxTicks or 30

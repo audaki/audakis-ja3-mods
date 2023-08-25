@@ -1,6 +1,6 @@
 
 
-local auda_increaseScrapParts_modifier
+local auda_increaseScrapParts_modifier = 100
 
 local applyLocalOptions = function()
 	auda_increaseScrapParts_modifier = tonumber(string.sub(CurrentModOptions['auda_increaseScrapParts_modifier'] or '100%', 1, -2))
@@ -8,8 +8,6 @@ end
 
 OnMsg.ApplyModOptions = applyLocalOptions
 OnMsg.ModsReloaded = applyLocalOptions
-
-applyLocalOptions()
 
 InventoryStack.GetScrapParts = function(self)
 	if self.class and InventoryItemDefs[self.class] then
