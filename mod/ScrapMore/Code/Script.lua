@@ -1,13 +1,32 @@
 
-if InventoryStack and not InventoryStack.hasIncreasedScrapParts then
+
+local auda_increaseScrapParts_modifier
+
+local applyOptions = function()
+	auda_increaseScrapParts_modifier = tonumber(string.sub(CurrentModOptions['auda_increaseScrapParts_modifier'] or '100%', 1, -2))
+end
+
+OnMsg.ApplyModOptions = applyOptions
+
+if InventoryStack then
 	InventoryStack.GetScrapParts = function(self)
 		if self.class and InventoryItemDefs[self.class] then
-			return self.Amount * (InventoryItemDefs[self.class]:GetProperty("ScrapParts") or 0)
+			return MulDivRound(self.Amount * (InventoryItemDefs[self.class]:GetProperty("ScrapParts") or 0), auda_increaseScrapParts_modifier, 100)
 		end
 
 		-- else fallback to default function
-		local parts = InventoryItem.GetScrapParts(self)
-		return parts * self.Amount
+		return self.Amount * InventoryItem.GetScrapParts(self)
+	end
+end
+
+if InventoryItem then
+	InventoryItem.GetScrapParts = function(self)
+		if self.class and InventoryItemDefs[self.class] then
+			return MulDivRound((InventoryItemDefs[self.class]:GetProperty("ScrapParts") or 0), auda_increaseScrapParts_modifier, 100)
+		end
+
+		-- else fallback to default function
+		return MulDivRound(self.ScrapParts, auda_increaseScrapParts_modifier, 100)
 	end
 end
 
