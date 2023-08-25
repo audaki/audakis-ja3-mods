@@ -175,6 +175,8 @@ AudaUi = {
 
       xt.OnContextUpdate = function(self, context, ...)
 
+        -- Kira: this XTemplate the only thing that doesn't cleanly update on RespawnContent
+        -- So I stay in the overwritten function for both options
         if not AudaUi.showFreeMove then
           self.Text = T(219068997732, "<apn(GetUIActionPoints())>")
           self.audaUiOrig__OnContextUpdate(self, context, ...)
