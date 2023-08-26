@@ -1,6 +1,4 @@
 
-local reloadThread
-
 AudaUi = {
   isKira = table.find(ModsLoaded, 'id', 'audaTest'),
 
@@ -24,17 +22,6 @@ AudaUi = {
 
   -- Show Colored Ammo?
   showColoredAmmo = true,
-
-
-  reloadInThread = function()
-    if reloadThread then
-      DeleteThread(reloadThread)
-    end
-    reloadThread = CreateRealTimeThread(function()
-      Sleep(666)
-      AudaUi.applyOptions()
-    end)
-  end,
 
 
   applyOptions = function()
@@ -66,7 +53,7 @@ AudaUi = {
     AudaUi.setup_showColoredAmmo()
 
     local dlg = GetInGameInterfaceModeDlg()
-    local partyUi = dlg and dlg:ResolveId("idParty")
+    local partyUi = dlg and dlg.idParty
     if partyUi then
       partyUi:RespawnContent()
     end
@@ -79,22 +66,22 @@ AudaUi = {
 
   -- Setup show XP functionality
   setup_showXp = function()
-    local mercRolloverEnergyXt = audaFindXtByTextId(XTemplates.PDAMercRollover, 997240698559)
-    if not mercRolloverEnergyXt then
+    local xt = audaFindXtByTextId(XTemplates.PDAMercRollover, 997240698559)
+    if not xt then
       return
     end
 
     if not AudaUi.showXp then
-      mercRolloverEnergyXt.ContextUpdateOnOpen = false
-      mercRolloverEnergyXt.OnContextUpdate = nil
+      xt:SetProperty('ContextUpdateOnOpen', false)
+      xt:SetProperty('OnContextUpdate', nil)
     else
-      mercRolloverEnergyXt.ContextUpdateOnOpen = true
-      mercRolloverEnergyXt.OnContextUpdate = function(self, context, ...)
+      xt:SetProperty('ContextUpdateOnOpen', true)
+      xt:SetProperty('OnContextUpdate', function(self, context, ...)
         local level = CalcLevel(context.Experience)
         local nextLevel = Min(#XPTable, level + 1)
         self:SetText('XP (Level ' .. level .. ') <right><style PDABrowserTextLightMedium>' .. context.Experience .. ' / ' .. XPTable[nextLevel] .. '</style><newline><left>' .. T(997240698559, "Energy<right><style PDABrowserTextLightMedium><EnergyStatusEffect()></style>"))
         return XContextControl.OnContextUpdate(self, context)
-      end
+      end)
     end
   end,
 
@@ -109,26 +96,26 @@ AudaUi = {
     local xtRoot = XTemplates.PDAMercRollover[1]
 
     if not xtRoot.audaUiOrig__Margins then
-      xtRoot.audaUiOrig__Margins = xtRoot.Margins
+      xtRoot:SetProperty('audaUiOrig__Margins', xtRoot.Margins)
     end
 
     if not AudaUi.showFreeMove then
-      xtRoot.Margins = xtRoot.audaUiOrig__Margins
+      xtRoot:SetProperty('Margins', xtRoot.audaUiOrig__Margins)
     else
-      xtRoot.Margins = box(42, 1, 0, 0)
+      xtRoot:SetProperty('Margins', box(42, 1, 0, 0))
     end
 
-    local mercRolloverApXt = audaFindXtByComment(xtRoot, 'ap indicator')
-    if mercRolloverApXt then
+    local rXt = audaFindXtByComment(xtRoot, 'ap indicator')
+    if rXt then
 
-      if not mercRolloverApXt.audaUiOrig__OnContextUpdate then
-        mercRolloverApXt.audaUiOrig__OnContextUpdate = mercRolloverApXt.OnContextUpdate
+      if not rXt.audaUiOrig__OnContextUpdate then
+        rXt:SetProperty('audaUiOrig__OnContextUpdate', rXt.OnContextUpdate)
       end
 
       if not AudaUi.showFreeMove then
-        mercRolloverApXt.OnContextUpdate = mercRolloverApXt.audaUiOrig__OnContextUpdate
+        rXt:SetProperty('OnContextUpdate', rXt.audaUiOrig__OnContextUpdate)
       else
-        mercRolloverApXt.OnContextUpdate = function(self, context, ...)
+        rXt:SetProperty('OnContextUpdate', function(self, context, ...)
 
           local text
 
@@ -162,7 +149,7 @@ AudaUi = {
           text = text .. " " .. T(363250742550, "<style PDARolloverHeaderDark>AP</style>")
           self:SetText(text)
           XContextControl.OnContextUpdate(self, context)
-        end
+        end)
       end
     end
 
@@ -170,75 +157,71 @@ AudaUi = {
     for _, xt in ipairs(apDisplays) do
 
       if not xt.audaUiOrig__OnContextUpdate then
-        xt.audaUiOrig__OnContextUpdate = xt.OnContextUpdate
+        xt:SetProperty('audaUiOrig__OnContextUpdate', xt.OnContextUpdate)
       end
 
-      xt.OnContextUpdate = function(self, context, ...)
+      if not AudaUi.showFreeMove then
+        xt:SetProperty('OnContextUpdate', xt.audaUiOrig__OnContextUpdate)
+      else
+        xt:SetProperty('OnContextUpdate', function(self, context, ...)
 
-        -- Kira: this XTemplate the only thing that doesn't cleanly update on RespawnContent
-        -- So I stay in the overwritten function for both options
-        if not AudaUi.showFreeMove then
-          self.Text = T(219068997732, "<apn(GetUIActionPoints())>")
-          self.audaUiOrig__OnContextUpdate(self, context, ...)
-          return
-        end
+          local text
+          if not IsKindOf(context, "Unit") then
+            return
+          end
+          self.parent:SetVisible(not not g_Combat and not context:IsDead() and not context:IsDowned())
 
-        local text
-        if not IsKindOf(context, "Unit") then
-          return
-        end
-        self.parent:SetVisible(not not g_Combat and not context:IsDead() and not context:IsDowned())
-
-        if g_Combat then
-          self.parent.MinWidth = 39
-          self.parent.MaxWidth = 49
-          local currentAP = context:GetUIActionPoints()
-          local bonus = context.free_move_ap
-          local ctx = SubContext(context, {
-            current = currentAP,
-            bonus = bonus,
-          })
-          if 1000 <= bonus then
-            text = T({
-              "<apn(current)><style PDASM_NewSquadLabel>+<apn(bonus)></style>",
-              ctx
+          if g_Combat then
+            self.parent.MinWidth = 39
+            self.parent.MaxWidth = 49
+            local currentAP = context:GetUIActionPoints()
+            local bonus = context.free_move_ap
+            local ctx = SubContext(context, {
+              current = currentAP,
+              bonus = bonus,
             })
+            if 1000 <= bonus then
+              text = T({
+                "<apn(current)><style PDASM_NewSquadLabel>+<apn(bonus)></style>",
+                ctx
+              })
+            else
+              text = T({
+                263805086279,
+                "<apn(current)>",
+                ctx
+              })
+            end
           else
+            self.parent.MinWidth = 30
+            self.parent.MaxWidth = 30
+            local maxAP = context:GetMaxActionPoints()
             text = T({
-              263805086279,
-              "<apn(current)>",
-              ctx
+              330002924751,
+              "<apn(maxActionPoints)>",
+              maxActionPoints = maxAP
             })
           end
-        else
-          self.parent.MinWidth = 30
-          self.parent.MaxWidth = 30
-          local maxAP = context:GetMaxActionPoints()
-          text = T({
-            330002924751,
-            "<apn(maxActionPoints)>",
-            maxActionPoints = maxAP
-          })
-        end
 
-        self:SetText(text)
-        XContextControl.OnContextUpdate(self, context)
+          self:SetText(text)
+          XContextControl.OnContextUpdate(self, context)
+        end)
       end
     end
   end,
 
   setup_showTired = function()
-    local mercRolloverXt = audaFindParentXtByTextId(XTemplates.PDAMercRollover, 997240698559)
-    local mercRolloverEnergyXt = audaFindXtByTextId(mercRolloverXt, 997240698559)
+    local xt = audaFindParentXtByTextId(XTemplates.PDAMercRollover, 997240698559)
+    local eXt = audaFindXtByTextId(xt, 997240698559)
 
-    if not mercRolloverXt or not mercRolloverEnergyXt then
+    if not xt or not eXt then
       return
     end
 
     local removeTiredXtFn = function()
-      for i, p in ipairs(mercRolloverXt) do
+      for i, p in ipairs(xt) do
         if p.Id == 'audaTiredRest' then
-          table.remove(mercRolloverXt, i)
+          table.remove(xt, i)
           break
         end
       end
@@ -247,14 +230,14 @@ AudaUi = {
     -- Always remove element first if it was added in a previous cycle
     removeTiredXtFn()
 
-    mercRolloverEnergyXt.Margins = nil
+    eXt.Margins = nil
 
     if not AudaUi.showTired then
       return
     end
 
     -- Fix margins of sibling element due to FoldWhenHidden
-    mercRolloverEnergyXt.Margins = box(0, 0, 0, 2)
+    eXt.Margins = box(0, 0, 0, 2)
 
     local tiredXt = PlaceObj("XTemplateWindow", {
       "__class",
@@ -334,22 +317,22 @@ AudaUi = {
       T(997240698559, "Tired/Rest Placeholder")
     })
 
-    table.insert(mercRolloverXt, tiredXt)
+    table.insert(xt, tiredXt)
   end,
 
   setup_showMorale = function()
 
-    local mercRolloverMoraleXt = audaFindXtByTextId(XTemplates.PDAMercRollover, 258629704073)
-    if not mercRolloverMoraleXt then
+    local xt = audaFindXtByTextId(XTemplates.PDAMercRollover, 258629704073)
+    if not xt then
       return
     end
 
     if not AudaUi.showMorale then
-      mercRolloverMoraleXt.ContextUpdateOnOpen = false
-      mercRolloverMoraleXt.OnContextUpdate = nil
+      xt:SetProperty('ContextUpdateOnOpen', false)
+      xt:SetProperty('OnContextUpdate', nil)
     else
-      mercRolloverMoraleXt.ContextUpdateOnOpen = true
-      mercRolloverMoraleXt.OnContextUpdate = function(self, context, ...)
+      xt:SetProperty('ContextUpdateOnOpen', true)
+      xt:SetProperty('OnContextUpdate', function(self, context, ...)
 
         if not AudaUi.showMorale then
           self:SetText(T(258629704073, "Morale<right><style PDABrowserTextLightMedium><MercMoraleText()></style>"))
@@ -480,7 +463,7 @@ AudaUi = {
         self:SetText('Morale<right><style PDABrowserTextLightMedium>' .. influences .. '</style>')
 
         return XContextControl.OnContextUpdate(self, context)
-      end
+      end)
     end
   end,
 
@@ -530,22 +513,22 @@ AudaUi = {
 
   setup_showSliderNumbers = function()
 
-    local xtMoveThumbFunc = audaFindXtByName(XTemplates.PropNumber, 'MoveThumb')
+    local xt = audaFindXtByName(XTemplates.PropNumber, 'MoveThumb')
 
-    if not xtMoveThumbFunc then
+    if not xt then
       return
     end
 
-    if not xtMoveThumbFunc.audaUiOrig__func then
-      xtMoveThumbFunc.audaUiOrig__func = xtMoveThumbFunc.func
+    if not xt.audaUiOrig__func then
+      xt:SetProperty('audaUiOrig__func', xt.func)
     end
 
 
     if not AudaUi.showSliderNumbers then
-      xtMoveThumbFunc.func = xtMoveThumbFunc.audaUiOrig__func
+      xt:SetProperty('func', xt.audaUiOrig__func)
     else
-      xtMoveThumbFunc.func = function(self, ...)
-        xtMoveThumbFunc.audaUiOrig__func(self, ...)
+      xt:SetProperty('func', function(self, ...)
+        xt.audaUiOrig__func(self, ...)
 
         local idName = self.parent and self.parent.idName or nil
         if idName then
@@ -599,7 +582,7 @@ AudaUi = {
           end
         end
 
-      end
+      end)
     end
   end,
 
@@ -650,6 +633,6 @@ AudaUi = {
   end,
 }
 
-OnMsg.ModsReloaded = AudaUi.reloadInThread
-OnMsg.ApplyModOptions = AudaUi.reloadInThread
-OnMsg.ReloadLua = AudaUi.reloadInThread
+OnMsg.ModsReloaded = AudaUi.applyOptions
+OnMsg.ApplyModOptions = AudaUi.applyOptions
+OnMsg.ReloadLua = AudaUi.applyOptions
