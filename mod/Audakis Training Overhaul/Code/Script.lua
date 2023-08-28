@@ -194,7 +194,7 @@ function RollForStatGaining(unit, stat, failChance)
   ::statGainNope::
 
   if statBefore <= 99 then
-    CombatLog(AudaAto.isRelease and "debug" or "important", T({
+    CombatLog(AudaAto.isKira and "important" or "debug", T({
       'SG:<prefix> <nick> <statAbbr>(<statBefore>) <reason>',
       prefix = prefix,
       nick = unit.Nick or 'Merc',
@@ -262,7 +262,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
   end
 
   while unit.statGainingPointsExtra >= 10000 do
-    CombatLog(AudaAto.isRelease and "debug" or "important", T { "<nick> +1 Train Boost (sge)", nick = unit.Nick or 'Merc' })
+    CombatLog(AudaAto.isKira and "important" or "debug", T { "<nick> +1 Train Boost (sge)", nick = unit.Nick or 'Merc' })
     unit.statGainingPointsExtra = Max(0, unit.statGainingPointsExtra - 10000)
     pointsToGain = pointsToGain + 1
   end
