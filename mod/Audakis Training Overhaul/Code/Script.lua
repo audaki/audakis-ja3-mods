@@ -83,6 +83,10 @@ end
 
 
 function RollForStatGaining(unit, stat, failChance)
+  if HasPerk(unit, "OldDog") then
+    return
+  end
+
   if unit[stat] <= 0 or unit[stat] >= 100 then
     return
   end
