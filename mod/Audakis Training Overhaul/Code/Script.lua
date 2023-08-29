@@ -1,4 +1,3 @@
-
 -- find text element by ID
 function audaFindXtByTextId(obj, id)
   if obj.Text and TGetID(obj.Text) == id then
@@ -15,11 +14,229 @@ end
 
 -- Setup training actions
 StatGainingPrerequisites.TrapDisarmExplosives.oncePerMapVisit = false
-StatGainingPrerequisites.TrapDisarmMechanical.oncePerMapVisit = false
-StatGainingPrerequisites.ResourceDiscovery.oncePerMapVisit = false
-StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
-StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
+StatGainingPrerequisites.TrapDisarmExplosives:PostLoad()
 
+StatGainingPrerequisites.TrapDisarmMechanical.oncePerMapVisit = false
+StatGainingPrerequisites.TrapDisarmMechanical:PostLoad()
+
+StatGainingPrerequisites.ResourceDiscovery.oncePerMapVisit = false
+StatGainingPrerequisites.ResourceDiscovery:PostLoad()
+
+StatGainingPrerequisites.TrapDiscovery.oncePerMapVisit = false
+StatGainingPrerequisites.TrapDiscovery:PostLoad()
+
+StatGainingPrerequisites.WeaponModification.failChance = 50
+StatGainingPrerequisites.WeaponModification:PostLoad()
+
+StatGainingPrerequisites.ExplosiveMultiHit.failChance = 0
+StatGainingPrerequisites.ExplosiveMultiHit:PostLoad()
+
+table.find_value(StatGainingPrerequisites.MercTraining.parameters, 'Name', 'hoursToSpend').Value = 9
+StatGainingPrerequisites.MercTraining:PostLoad()
+
+table.find_value(StatGainingPrerequisites.MilitiaTraining.parameters, 'Name', 'hoursToSpend').Value = 9
+StatGainingPrerequisites.MilitiaTraining:PostLoad()
+
+table.find_value(StatGainingPrerequisites.Mechanic.parameters, 'Name', 'hoursToSpend').Value = 9
+StatGainingPrerequisites.Mechanic:PostLoad()
+
+if not StatGainingPrerequisites.GatheredIntel then
+  local op = PlaceObj('StatGainingPrerequisite', {
+    Comment = "Finished a Scout Sector activity in the satellite view lasting <hoursToSpend>+ hours",
+    group = "Wisdom",
+    id = "GatheredIntel",
+    msg_reactions = {
+      PlaceObj('MsgReaction', {
+        Event = "OperationChanged",
+        Handler = function(self, unit, oldOperation, newOperation, prevProfession, interrupted)
+          if IsMerc(unit) then
+            -- Track start time of training activity
+            if newOperation and newOperation.id == "GatherIntel" and unit.OperationProfession == "Spy" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              state.startTime = Game.CampaignTime
+              SetPrerequisiteState(unit, self.id, state)
+              -- Accumulate time spent at end of activity
+            elseif oldOperation and oldOperation.id == "GatherIntel" and unit.OperationProfession ~= "Spy" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              if not state.startTime or state.startTime == 0 then
+                return
+              end
+              state.timeSpent = (state.timeSpent or 0) + (Game.CampaignTime - state.startTime)
+              state.startTime = 0
+              if DivRound(state.timeSpent, const.Scale.h) >= self:ResolveValue("hoursToSpend") then
+                SetPrerequisiteState(unit, self.id, state, "gain")
+              else
+                SetPrerequisiteState(unit, self.id, state)
+              end
+            end
+          end
+        end,
+        HandlerCode = function(self, unit, oldOperation, newOperation, prevProfession, interrupted)
+          if IsMerc(unit) then
+            -- Track start time of training activity
+            if newOperation and newOperation.id == "GatherIntel" and unit.OperationProfession == "Spy" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              state.startTime = Game.CampaignTime
+              SetPrerequisiteState(unit, self.id, state)
+              -- Accumulate time spent at end of activity
+            elseif oldOperation and oldOperation.id == "GatherIntel" and unit.OperationProfession ~= "Spy" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              if not state.startTime or state.startTime == 0 then
+                return
+              end
+              state.timeSpent = (state.timeSpent or 0) + (Game.CampaignTime - state.startTime)
+              state.startTime = 0
+              if DivRound(state.timeSpent, const.Scale.h) >= self:ResolveValue("hoursToSpend") then
+                SetPrerequisiteState(unit, self.id, state, "gain")
+              else
+                SetPrerequisiteState(unit, self.id, state)
+              end
+            end
+          end
+        end,
+      }),
+    },
+    parameters = {
+      PlaceObj('PresetParamNumber', {
+        'Name', "hoursToSpend",
+        'Value', 9,
+        'Tag', "<hoursToSpend>",
+      }),
+    },
+    relatedStat = "Wisdom",
+  })
+
+  op:PostLoad()
+end
+
+if not StatGainingPrerequisites.HarvestedJunk then
+  local op = PlaceObj('StatGainingPrerequisite', {
+    Comment = "Finished a Scout Sector activity in the satellite view lasting <hoursToSpend>+ hours",
+    group = "Mechanical",
+    id = "HarvestedJunk",
+    msg_reactions = {
+      PlaceObj('MsgReaction', {
+        Event = "OperationChanged",
+        Handler = function(self, unit, oldOperation, newOperation, prevProfession, interrupted)
+          if IsMerc(unit) then
+            -- Track start time of training activity
+            if newOperation and newOperation.id == "HarvestJunk" and unit.OperationProfession == "Junk Harvester" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              state.startTime = Game.CampaignTime
+              SetPrerequisiteState(unit, self.id, state)
+              -- Accumulate time spent at end of activity
+            elseif oldOperation and oldOperation.id == "HarvestJunk" and unit.OperationProfession ~= "Junk Harvester" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              if not state.startTime or state.startTime == 0 then
+                return
+              end
+              state.timeSpent = (state.timeSpent or 0) + (Game.CampaignTime - state.startTime)
+              state.startTime = 0
+              if DivRound(state.timeSpent, const.Scale.h) >= self:ResolveValue("hoursToSpend") then
+                SetPrerequisiteState(unit, self.id, state, "gain")
+              else
+                SetPrerequisiteState(unit, self.id, state)
+              end
+            end
+          end
+        end,
+        HandlerCode = function(self, unit, oldOperation, newOperation, prevProfession, interrupted)
+          if IsMerc(unit) then
+            -- Track start time of training activity
+            if newOperation and newOperation.id == "HarvestJunk" and unit.OperationProfession == "Junk Harvester" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              state.startTime = Game.CampaignTime
+              SetPrerequisiteState(unit, self.id, state)
+              -- Accumulate time spent at end of activity
+            elseif oldOperation and oldOperation.id == "HarvestJunk" and unit.OperationProfession ~= "Junk Harvester" then
+              local state = GetPrerequisiteState(unit, self.id) or {}
+              if not state.startTime or state.startTime == 0 then
+                return
+              end
+              state.timeSpent = (state.timeSpent or 0) + (Game.CampaignTime - state.startTime)
+              state.startTime = 0
+              if DivRound(state.timeSpent, const.Scale.h) >= self:ResolveValue("hoursToSpend") then
+                SetPrerequisiteState(unit, self.id, state, "gain")
+              else
+                SetPrerequisiteState(unit, self.id, state)
+              end
+            end
+          end
+        end,
+      }),
+    },
+    parameters = {
+      PlaceObj('PresetParamNumber', {
+        'Name', "hoursToSpend",
+        'Value', 9,
+        'Tag', "<hoursToSpend>",
+      }),
+    },
+    relatedStat = "Mechanical",
+  })
+
+  op:PostLoad()
+end
+
+if not StatGainingPrerequisites.DoorLockPicked then
+  local op = PlaceObj('StatGainingPrerequisite', {
+    Comment = "Unlocked a Door with Lockpick",
+    group = "Mechanical",
+    id = "DoorLockPicked",
+    msg_reactions = {
+      PlaceObj('MsgReaction', {
+        Event = "DoorUnlocked",
+        Handler = function(self, door, unit)
+          if IsMerc(unit) then
+            if door.interaction_log and #door.interaction_log >= 1 and door.interaction_log[#door.interaction_log].action == 'Lockpick' then
+              SetPrerequisiteState(mechanic, self.id, true, "gain")
+            end
+          end
+        end,
+        HandlerCode = function(self, door, unit)
+          if IsMerc(unit) then
+            if door.interaction_log and #door.interaction_log >= 1 and door.interaction_log[#door.interaction_log].action == 'Lockpick' then
+              SetPrerequisiteState(mechanic, self.id, true, "gain")
+            end
+          end
+        end,
+      }),
+    },
+    relatedStat = "Mechanical",
+  })
+
+  op:PostLoad()
+end
+
+if not StatGainingPrerequisites.DoorLockBroken then
+  local op = PlaceObj('StatGainingPrerequisite', {
+    Comment = "Unlocked a Door with Crowbar",
+    group = "Strength",
+    id = "DoorLockBroken",
+    msg_reactions = {
+      PlaceObj('MsgReaction', {
+        Event = "DoorUnlocked",
+        Handler = function(self, door, unit)
+          if IsMerc(unit) then
+            if door.interaction_log and #door.interaction_log >= 1 and door.interaction_log[#door.interaction_log].action == 'Break' then
+              SetPrerequisiteState(mechanic, self.id, true, "gain")
+            end
+          end
+        end,
+        HandlerCode = function(self, door, unit)
+          if IsMerc(unit) then
+            if door.interaction_log and #door.interaction_log >= 1 and door.interaction_log[#door.interaction_log].action == 'Break' then
+              SetPrerequisiteState(mechanic, self.id, true, "gain")
+            end
+          end
+        end,
+      }),
+    },
+    relatedStat = "Strength",
+  })
+
+  op:PostLoad()
+end
 
 AudaAto = {
   isKira = table.find(ModsLoaded, 'id', 'audaTest'),
@@ -54,7 +271,10 @@ AudaAto = {
     minTicks = minTicks or 15
     maxTicks = maxTicks or 30
     local cd = InteractionRandRange(minTicks * self.tickLength, maxTicks * self.tickLength, "StatCooldown")
-    local cdMod = MulDivRound(Clamp(stat, 20, 97), 175, 100)
+    local cdMod = MulDivRound(Clamp(stat, 15, 99), 175, 100)
+    if stat >= 90 then
+      cdMod = MulDivRound(cdMod, 100 + 25 * (stat - 89), 100)
+    end
     cd = MulDivRound(cd, cdMod, 100)
     return cd
   end,
@@ -80,7 +300,6 @@ end
 function OnMsg.ApplyModOptions()
   AudaAto:applyOptions()
 end
-
 
 function RollForStatGaining(unit, stat, failChance)
   if HasPerk(unit, "OldDog") then
@@ -139,40 +358,39 @@ function RollForStatGaining(unit, stat, failChance)
     goto statGainNope
   end
 
-
   if true then
 
     local bonusToRoll = 4
-    
-    -- 0 to 3
-    local wisdomBonus = (Clamp(unit.Wisdom, 55, 100) - 55) / 15
+
+    -- 0 to 6
+    local wisdomBonus = (Clamp(unit.Wisdom, 52, 100) - 52) / 8
     local thresholdDiffDiv = 180
 
     if stat == 'Health' then
-      bonusToRoll = bonusToRoll + 3
+      bonusToRoll = bonusToRoll + 2
     elseif stat == 'Agility' then
       bonusToRoll = bonusToRoll
     elseif stat == 'Dexterity' then
-      bonusToRoll = bonusToRoll + 3
+      bonusToRoll = bonusToRoll + 2
     elseif stat == 'Strength' then
-      bonusToRoll = bonusToRoll + 5
+      bonusToRoll = bonusToRoll + 4
     elseif stat == 'Wisdom' then
       bonusToRoll = bonusToRoll
       thresholdDiffDiv = 155
     elseif stat == 'Leadership' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 3
+      bonusToRoll = bonusToRoll + wisdomBonus
       thresholdDiffDiv = 400 + wisdomBonus * 50
     elseif stat == 'Marksmanship' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 3
+      bonusToRoll = bonusToRoll + wisdomBonus
       thresholdDiffDiv = 400 + wisdomBonus * 50
     elseif stat == 'Mechanical' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 3
+      bonusToRoll = bonusToRoll + wisdomBonus
       thresholdDiffDiv = 250 + wisdomBonus * 25
     elseif stat == 'Explosives' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 3
+      bonusToRoll = bonusToRoll + wisdomBonus
       thresholdDiffDiv = 250 + wisdomBonus * 25
     elseif stat == 'Medical' then
-      bonusToRoll = bonusToRoll + wisdomBonus + 3
+      bonusToRoll = bonusToRoll + wisdomBonus
       thresholdDiffDiv = 250 + wisdomBonus * 25
     end
 
@@ -191,7 +409,7 @@ function RollForStatGaining(unit, stat, failChance)
     end
   end
 
-  ::statGainNope::
+  :: statGainNope ::
 
   if statBefore <= 99 then
     CombatLog(AudaAto.isKira and "important" or "debug", T({
@@ -206,8 +424,6 @@ function RollForStatGaining(unit, stat, failChance)
 
   SetMercStateFlag(unit.session_id, "StatGaining", sgData)
 end
-
-
 
 function ReceiveStatGainingPoints(unit, xpGain)
   if HasPerk(unit, "OldDog") then
@@ -228,7 +444,7 @@ function ReceiveStatGainingPoints(unit, xpGain)
       SetMercStateFlag(unit.session_id, "StatGaining", sgData)
     end
 
-    local sgeIncrease = 200 + MulDivRound(wis, 100, 100)
+    local sgeIncrease = 142 + MulDivRound(wis, 169, 100)
     sgeIncrease = MulDivRound(sgeIncrease, AudaAto.sgeGainMod, 100)
     if sgp <= 4 then
       local minBoost = MulDivRound(sgeIncrease, 40, 100)
@@ -237,11 +453,11 @@ function ReceiveStatGainingPoints(unit, xpGain)
       if sgp == 1 then
         sgeBoost = MulDivRound(sgeBoost, 90, 100)
       elseif sgp == 2 then
-        sgeBoost = MulDivRound(sgeBoost, 75, 100)
+        sgeBoost = MulDivRound(sgeBoost, 80, 100)
       elseif sgp == 3 then
-        sgeBoost = MulDivRound(sgeBoost, 55, 100)
+        sgeBoost = MulDivRound(sgeBoost, 70, 100)
       elseif sgp == 4 then
-        sgeBoost = MulDivRound(sgeBoost, 30, 100)
+        sgeBoost = MulDivRound(sgeBoost, 60, 100)
       end
       sgeIncrease = sgeIncrease + sgeBoost
     elseif sgp <= 9 then
@@ -285,8 +501,6 @@ function OnMsg.MercHireStatusChanged(unit_data, previousState, newState)
   end
 end
 
-
-
 for _, param in ipairs(SectorOperations.TrainMercs.Parameters) do
   if param.Name == 'ActivityDurationInHoursFull' then
     param.Value = 24
@@ -294,15 +508,13 @@ for _, param in ipairs(SectorOperations.TrainMercs.Parameters) do
 end
 g_PresetParamCache[SectorOperations.TrainMercs]['ActivityDurationInHoursFull'] = 24
 
-
-SectorOperations.TrainMercs.ProgressPerTick = function (self, merc, prediction)
+SectorOperations.TrainMercs.ProgressPerTick = function(self, merc, prediction)
   local progressPerTick = self:ResolveValue("PerTickProgress")
   if CheatEnabled("FastActivity") then
-    progressPerTick = progressPerTick*100
+    progressPerTick = progressPerTick * 100
   end
   return progressPerTick
 end
-
 
 SectorOperations.TrainMercs.Tick = function(self, merc)
   --Learning speed parameter defines the treshold of how much must be gained to gain 1 in a stat. Bigger number means slower.
@@ -331,7 +543,6 @@ SectorOperations.TrainMercs.Tick = function(self, merc)
           local bonusPercent = CharacterEffectDefs.Teacher:ResolveValue("MercTrainingBonus")
           progressPerTick = progressPerTick + MulDivRound(progressPerTick, bonusPercent, 100)
         end
-
 
         if #students >= 2 then
           progressPerTick = MulDivRound(progressPerTick, 100, 100 + 15 * (#students - 1))
